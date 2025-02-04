@@ -11,7 +11,6 @@ import pickle
 from tqdm import tqdm 
 
 
-
 class SingleStageMethod(nn.Module): 
     def __init__(self, name: str, model: nn.Module, transform: transforms.Compose, descriptor_dim: int, search_dist: str='cosine'): 
         super().__init__()
@@ -24,8 +23,8 @@ class SingleStageMethod(nn.Module):
 
     def forward(self, input: Union[Image.Image, torch.Tensor]) -> dict: 
         if isinstance(input, Image.Image): 
-            image = self.transform(image)[None, ...]
-        return self.model(input)
+            input = self.transform(input)[None, ...]
+        return {"global_desc": self.model(input).detach().cpu().numpy().astype(np.float32)}
     
     def compute_features(self, dataset, batch_size: int=32, num_workers: int=4, recompute: bool=False, device: Union[str, None]=None) -> dict: 
         if not recompute: 
