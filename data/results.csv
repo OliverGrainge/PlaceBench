@@ -1,3 +1,9 @@
 Method,Dataset,Accuracy (R@1),Accuracy (R@5),Accuracy (R@10),Extraction Latency (ms),Matching Latency (ms),Model Memory (MB),DB Memory (MB)
-DinoV2-Salad,MSLS,88.22,93.84,95.13,9.13,29.76,335.66,1216.29
-DinoV2-Salad,Tokyo247,94.29,97.78,98.10,9.20,114.60,335.66,4897.41
+DinoV2-Salad,Pitts30k,92.40,96.19,97.39,8.93,15.66,335.66,644.53
+DinoV2-Salad,Essex3in1,89.05,100.00,100.00,9.07,0.19,335.66,13.54
+EigenPlaces,Pitts30k,92.69,96.70,97.55,3.29,3.58,105.89,156.25
+EigenPlaces,Essex3in1,89.05,98.57,99.52,3.28,0.05,105.89,3.28
+DinoV2-BoQ,Pitts30k,93.69,97.02,97.90,9.14,19.81,363.18,937.50
+DinoV2-BoQ,Essex3in1,90.95,99.52,100.00,9.17,0.28,363.18,19.69
+ResNet50-BoQ,Pitts30k,92.43,96.49,97.40,3.75,26.85,91.08,1250.00
+ResNet50-BoQ,Essex3in1,93.33,100.00,100.00,3.79,0.36,91.08,26.25
