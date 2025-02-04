@@ -1,3 +1,3 @@
 
 
-Pitts30k_root = "/home/oliver/datasets_drive/vpr_datasets/Pittsburgh-Query"
+Pitts30k_root = "/Users/olivergrainge/Documents/github/Datasets/Pittsburgh-Query"

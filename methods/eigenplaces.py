@@ -9,7 +9,7 @@ class EigenPlaces(SingleStageMethod):
             self, 
             name="EigenPlaces",
             model=torch.hub.load("gmberton/eigenplaces", "get_trained_model", backbone="ResNet50", fc_output_dim=2048),
-            desc_dim=2048, 
+        
             transform=T.Compose(
             [
                 T.ToTensor(),
@@ -19,11 +19,12 @@ class EigenPlaces(SingleStageMethod):
                     antialias=True,
                 ),
                 T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]
-        ),
+            ]),
+            descriptor_dim=2048, 
             search_dist='cosine'
+   
     ): 
-        super().__init__(name, model, desc_dim, transform, search_dist)
+        super().__init__(name, model, transform, descriptor_dim, search_dist)
 
 
 
