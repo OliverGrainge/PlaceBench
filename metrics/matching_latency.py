@@ -8,6 +8,7 @@ def matching_latency(method, dataset, warmup_iter: int=10, num_samples: int=100)
         break
     
     method.eval()
+    batch = batch.to(next(method.parameters()).device)
     query = method(batch)
     samples = []
     for _ in range(warmup_iter): 

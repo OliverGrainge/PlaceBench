@@ -1,33 +1,29 @@
-
 import torch.nn as nn
 import torch 
 from .base import SingleStageMethod
 import torchvision.transforms as T
+from contextlib import redirect_stdout
+import os
 from contextlib import redirect_stdout, redirect_stderr
 import os 
 
-class EigenPlaces(SingleStageMethod): 
+class DinoV2_Salad(SingleStageMethod): 
     def __init__(
             self, 
-            name="EigenPlaces",
-            model=None,
-        
-            transform=T.Compose(
-            [
+            name="DinoV2-Salad",
+            model=None,  # We'll load the model below
+            transform=T.Compose([
                 T.ToTensor(),
-                T.Resize(
-                    (512, 512),
-                    interpolation=T.InterpolationMode.BICUBIC,
-                    antialias=True,
-                ),
+                T.Resize((322, 322), interpolation=T.InterpolationMode.BICUBIC, antialias=True),
                 T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]),
-            descriptor_dim=2048, 
+            descriptor_dim=8448, 
             search_dist='cosine'
-   
-    ):  
+    ): 
+        # Suppress output while loading model
         with open(os.devnull, 'w') as f, redirect_stdout(f), redirect_stderr(f):
-            model = torch.hub.load("gmberton/eigenplaces", "get_trained_model", backbone="ResNet50", fc_output_dim=2048)
+            model = torch.hub.load("serizba/salad", "dinov2_salad")
+        
         super().__init__(name, model, transform, descriptor_dim, search_dist)
 
 

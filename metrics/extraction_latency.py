@@ -9,6 +9,8 @@ def extraction_latency(method, dataset, warmup_iter: int=10, num_samples: int=10
     method = method.to(device)
     method.eval()
     batch = batch.to(device)
+
+    
     # Warmup phase
     for _ in range(warmup_iter):
         method(batch)
@@ -17,6 +19,7 @@ def extraction_latency(method, dataset, warmup_iter: int=10, num_samples: int=10
     
     for _ in range(num_samples): 
         start = time.time()
+        
         method(batch)
         end = time.time()
         samples.append((end - start) * 1000)  # Convert to milliseconds

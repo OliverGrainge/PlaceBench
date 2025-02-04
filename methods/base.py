@@ -24,6 +24,7 @@ class SingleStageMethod(nn.Module):
     def forward(self, input: Union[Image.Image, torch.Tensor]) -> dict: 
         if isinstance(input, Image.Image): 
             input = self.transform(input)[None, ...]
+        # Move input to the same device as the model
         return {"global_desc": self.model(input).detach().cpu().numpy().astype(np.float32)}
     
     def compute_features(self, dataset, batch_size: int=32, num_workers: int=4, recompute: bool=False, device: Union[str, None]=None) -> dict: 
@@ -40,12 +41,12 @@ class SingleStageMethod(nn.Module):
         self.model.eval()
 
         dl = dataset.dataloader(batch_size=batch_size, num_workers=num_workers, transform=self.transform)
-        all_desc = np.zeros((len(dataset), self.descriptor_dim))
-        for batch in tqdm(dl): 
+        all_desc = np.zeros((len(dataset), self.descriptor_dim), dtype=np.float32)
+        for batch in tqdm(dl, desc=f"Extracting {self.name} features for {dataset.name}"): 
             images, idx = batch 
             images = images.to(device)
-            desc = self.model(images)
-            all_desc[idx] = desc.detach().cpu().numpy().astype(np.float32)
+            desc = self(images)
+            all_desc[idx] = desc["global_desc"].astype(np.float32)
 
         query_features = all_desc[:len(dataset.query_paths)]
         database_features = all_desc[len(dataset.query_paths):]
