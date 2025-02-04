@@ -1,4 +1,7 @@
 *.npy
+!pitts30k_gt.npy
+!pitts30k_query.npy
+!pitts30k_database.npy
 *__pycache__*
 *.faiss
 *.pkl
