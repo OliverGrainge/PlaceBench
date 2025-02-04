@@ -35,10 +35,10 @@ class VPRDataset:
 
         self.name = name
         self.root = root
-        self.query_paths = np.load(query_paths, allow_pickle=True)[:20]
-        self.database_paths = np.load(database_paths, allow_pickle=True)[:30] 
+        self.query_paths = np.load(query_paths, allow_pickle=True)
+        self.database_paths = np.load(database_paths, allow_pickle=True) 
         self.all_paths = np.concatenate([self.query_paths, self.database_paths])
-        self.gt = np.load(ground_truth_path, allow_pickle=True)[:20]
+        self.gt = np.load(ground_truth_path, allow_pickle=True)
         
     def __len__(self) -> int: 
         return len(self.all_paths)

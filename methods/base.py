@@ -43,6 +43,7 @@ class SingleStageMethod(nn.Module):
         all_desc = np.zeros((len(dataset), self.descriptor_dim))
         for batch in tqdm(dl): 
             images, idx = batch 
+            images = images.to(device)
             desc = self.model(images)
             all_desc[idx] = desc.detach().cpu().numpy().astype(np.float32)
 
