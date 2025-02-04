@@ -1,0 +1,3 @@
+Method,Dataset,Accuracy (R@1),Accuracy (R@5),Accuracy (R@10),Extraction Latency (ms),Matching Latency (ms),Model Memory (MB),DB Memory (MB)
+DinoV2-Salad,MSLS,88.22,93.84,95.13,9.13,29.76,335.66,1216.29
+DinoV2-Salad,Tokyo247,94.29,97.78,98.10,9.20,114.60,335.66,4897.41
