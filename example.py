@@ -7,9 +7,8 @@ import csv
 from tabulate import tabulate  # Add this import
 import os 
 
-methods = [DinoV2_Salad]#, EigenPlaces, DinoV2_BoQ, ResNet50_BoQ]
-datasets = [(Pitts30k, config.Pitts30k_root)]
-datasets = [(MSLS, config.MSLS_root), (Tokyo247, config.Tokyo247_root)] #(SFXL, config.SFXL_root)]
+methods = [DinoV2_Salad, EigenPlaces, DinoV2_BoQ, ResNet50_BoQ]
+datasets = [(Pitts30k, config.Pitts30k_root), (Essex3in1, config.Essex3in1_root)]
 
 # Prepare data for CSV
 csv_data = []
