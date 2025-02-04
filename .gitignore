@@ -1,1 +1,4 @@
 *.npy
+*__pycache__*
+*.faiss
+*.pkl
