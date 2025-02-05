@@ -17,7 +17,7 @@ plt.rcParams.update(
     }
 )
 
-DATASET = "Pitts30k"
+DATASET = "Tokyo247"
 df = pd.read_csv("results.csv")
 df = df[df["Dataset"] == DATASET].copy()
 
