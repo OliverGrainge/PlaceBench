@@ -4,3 +4,4 @@ from .eigenplaces import EigenPlaces
 from .resnet50_boq import ResNet50_BoQ
 from .mixvpr import MixVPR
 from .tetra import TeTRA
+from .base import SingleStageMethod

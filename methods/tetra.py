@@ -906,7 +906,7 @@ class TeTRAModel(nn.Module):
     def __init__(self, aggregation_type="boq", descriptor_div: int=1): 
         super().__init__()
         self.backbone = TeTRABackbone()
-        self.aggregation = get_aggregator(aggregation_type, None)
+        self.aggregation = get_aggregator(aggregation_type, descriptor_div)
 
     def forward(self, x): 
         x = self.backbone(x)
@@ -916,7 +916,6 @@ class TeTRAModel(nn.Module):
     def deploy(self, use_bitblas=True):
         if hasattr(self.backbone, "deploy"):
             self.backbone.deploy(use_bitblas=use_bitblas)
-
 
 
 def load_tetra_statedict(aggregation_type: str, descriptor_div: int): 
@@ -1049,14 +1048,15 @@ class TeTRA(SingleStageMethod):
             return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
         elif aggregation_type.lower() == "mixvpr": 
             dim = 4096 // descriptor_div
-            return self._float2binary_desc(np.zeros(1, dim), dtype=np.float32).shape[1]
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
         elif aggregation_type.lower() == "salad":
             desc_div = ["1", "2", "4", "8"]
             desc_dim = [8448, 4306, 2304, 1246]
             dim = desc_dim[desc_div.index(str(descriptor_div))]
-            return self._float2binary_desc(np.zeros(1, dim), dtype=np.float32).shape[1]
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
         elif aggregation_type.lower() == "gem": 
             dim = 2048 // descriptor_div
-            return self._float2binary_desc(np.zeros(1, dim), dtype=np.float32).shape[1]
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
         else: 
             raise ValueError(f"Invalid aggregation type: {aggregation_type}")
+        

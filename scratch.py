@@ -7,6 +7,10 @@ from einops.layers.torch import Rearrange
 import math 
 import numpy as np
 import os 
+import torchvision.transforms as T
+from PIL import Image
+import faiss
+from methods import SingleStageMethod
 
 def pack_ternary(tensor):
     assert tensor.dim() == 2, "Input must be a 2D tensor."
@@ -152,9 +156,11 @@ class BitLinear(nn.Linear):
         if mode:
             self._buffers.clear()
         else:
-            qweight, scale = weight_quant_real(self.weight)
-            self.qweight = qweight
-            self.scale = scale
+            # Only quantize if we haven't deployed yet
+            if not (self.deployed_real or self.deployed_fake):
+                qweight, scale = weight_quant_real(self.weight)
+                self.qweight = qweight
+                self.scale = scale
         self = super().train(mode)
 
     def deploy(self, use_bitblas=True, opt_M=None):
@@ -853,6 +859,7 @@ def get_aggregator(agg_arch, desc_divider_factor=None):
         config["out_dim"] = 2048
         if desc_divider_factor is not None:
             config["out_dim"] = config["out_dim"] // desc_divider_factor
+
         return GeM(**config)
 
     elif "mixvpr" in agg_arch.lower():
@@ -900,7 +907,7 @@ class TeTRAModel(nn.Module):
     def __init__(self, aggregation_type="boq", descriptor_div: int=1): 
         super().__init__()
         self.backbone = TeTRABackbone()
-        self.aggregation = get_aggregator(aggregation_type, None)
+        self.aggregation = get_aggregator(aggregation_type, descriptor_div)
 
     def forward(self, x): 
         x = self.backbone(x)
@@ -928,8 +935,131 @@ def load_tetra_statedict(aggregation_type: str, descriptor_div: int):
     return torch.load(path, map_location="cpu", weights_only=True)['state_dict']
 
 
+from typing import Union 
+from tqdm import tqdm
 
 
-sd = load_tetra_statedict("boq", 1)
-model = TeTRAModel(aggregation_type="boq", descriptor_div=1)
-model.load_state_dict(sd)
+class TeTRA(SingleStageMethod):
+    def __init__(
+        self,
+        aggregation_type="boq", 
+        descriptor_div=1,
+        name=None,
+        model=None,
+        transform=T.Compose(
+            [
+                T.Resize((322, 322)),  # Resize the image to the specified size
+                T.ToTensor(),  # Convert image to tensors
+                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        ),
+        descriptor_dim=None,
+        search_dist="cosine",
+    ):
+        aggregation_type = self._normalize_aggregation_type(aggregation_type)
+        descriptor_dim = self._get_descriptor_dim(aggregation_type, descriptor_div)
+        name = f"TeTRA-{aggregation_type}-DD[{descriptor_div}]"
+        model = TeTRAModel(aggregation_type=aggregation_type, descriptor_div=descriptor_div)
+        sd = load_tetra_statedict(aggregation_type, descriptor_div)
+        model.load_state_dict(sd)
+        model.name = f"TeTRA-{aggregation_type}-DD[{descriptor_div}]"
+        model.deploy()
+        super().__init__(name, model, transform, descriptor_dim, search_dist)
+
+    @staticmethod
+    def _float2binary_desc(desc: np.ndarray) -> np.ndarray:
+        """Convert float descriptors to binary packed format."""
+        binary = (desc > 0).astype(np.bool_)
+        n_bytes = (binary.shape[1] + 7) // 8
+        return np.packbits(binary, axis=1)[:, :n_bytes]
+    
+    def forward(self, input: Union[Image.Image, torch.Tensor]) -> dict:
+        if isinstance(input, Image.Image):
+            input = self.transform(input)[None, ...]
+        # Move input to the same device as the model
+        return {
+            "global_desc": self._float2binary_desc(self.model(input).detach().cpu().numpy().astype(np.float32))
+        }
+
+
+    def compute_features(
+        self,
+        dataset,
+        batch_size: int = 32,
+        num_workers: int = 4,
+        recompute: bool = False,
+        device: Union[str, None] = None,
+    ) -> dict:
+        if not recompute:
+            feature_dict = self._load_features(dataset.name)
+            if feature_dict is not None:
+                self.index = self._setup_index(feature_dict["database"]["global_desc"])
+                return feature_dict
+
+        if device is None:
+            device = self._detect_device()
+
+        self.model = self.model.to(device)
+        self.model.eval()
+
+        dl = dataset.dataloader(
+            batch_size=batch_size, num_workers=num_workers, transform=self.transform
+        )
+        all_desc = np.zeros((len(dataset), self.descriptor_dim), dtype=np.uint8)
+        for batch in tqdm(
+            dl, desc=f"Extracting {self.name} features for {dataset.name}"
+        ):
+            images, idx = batch
+            images = images.to(device)
+            desc = self(images)
+            all_desc[idx] = desc["global_desc"].astype(np.float32)
+
+        query_features = all_desc[: len(dataset.query_paths)]
+        database_features = all_desc[len(dataset.query_paths) :]
+
+        feature_dict = {
+            "query": {"global_desc": query_features},
+            "database": {"global_desc": database_features},
+        }
+        self._save_features(dataset.name, feature_dict)
+        self.index = self._setup_index(database_features)
+        return feature_dict
+        
+    def _setup_index(self, desc: np.ndarray) -> faiss.Index:
+        bits_per_vector = desc.shape[1] * 8
+        index = faiss.IndexBinaryFlat(bits_per_vector)
+        index.add(desc)
+        return index
+    
+    @staticmethod
+    def _normalize_aggregation_type(aggregation_type: str): 
+        if aggregation_type.lower() == "boq": 
+            return "BoQ"
+        elif aggregation_type.lower() == "mixvpr": 
+            return "MixVPR"
+        elif aggregation_type.lower() == "salad": 
+            return "SALAD"
+        elif aggregation_type.lower() == "gem": 
+            return "GeM"
+        else: 
+            raise ValueError(f"Invalid aggregation type: {aggregation_type}")
+        
+    def _get_descriptor_dim(self, aggregation_type: str, descriptor_div: int): 
+        if aggregation_type.lower() == "boq": 
+            dim = 12288 // descriptor_div
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
+        elif aggregation_type.lower() == "mixvpr": 
+            dim = 4096 // descriptor_div
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
+        elif aggregation_type.lower() == "salad":
+            desc_div = ["1", "2", "4", "8"]
+            desc_dim = [8448, 4306, 2304, 1246]
+            dim = desc_dim[desc_div.index(str(descriptor_div))]
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
+        elif aggregation_type.lower() == "gem": 
+            dim = 2048 // descriptor_div
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
+        else: 
+            raise ValueError(f"Invalid aggregation type: {aggregation_type}")
+        
+

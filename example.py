@@ -31,7 +31,7 @@ headers = [
 for method_type in methods:
     for dataset_type, root in datasets:
         dataset = dataset_type(root)
-        method = method_type()
+        method = method_type(descriptor_div=2)
         method.compute_features(dataset, batch_size=128, num_workers=8)
 
         recalls = ratk(method, dataset, topks=[1, 5, 10])
