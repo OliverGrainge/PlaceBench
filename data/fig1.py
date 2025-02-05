@@ -17,7 +17,7 @@ plt.rcParams.update(
     }
 )
 
-DATASET = "MSLS"
+DATASET = "Pitts30k"
 df = pd.read_csv("results.csv")
 df = df[df["Dataset"] == DATASET].copy()
 
