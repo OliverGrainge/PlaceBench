@@ -12,7 +12,7 @@ from metrics import (database_memory, extraction_latency, matching_latency,
 output_file = "data/results.csv"
 #methods = [DinoV2_Salad, EigenPlaces, DinoV2_BoQ, ResNet50_BoQ, MixVPR]
 methods = [TeTRA]
-datasets = [(Essex3in1, config.Essex3in1_root)]
+datasets = [(Essex3in1, config.Essex3in1_root), (Pitts30k, config.Pitts30k_root)]
 
 # Prepare data for CSV
 csv_data = []
