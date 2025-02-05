@@ -1,16 +1,19 @@
+import math
+import os
+
+import faiss
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torchvision.transforms as T
 from einops import rearrange
 from einops.layers.torch import Rearrange
-import math 
-import numpy as np
-import os 
-from .base import SingleStageMethod
-import torchvision.transforms as T
 from PIL import Image
-import faiss
+
+from .base import SingleStageMethod
+
 
 def pack_ternary(tensor):
     assert tensor.dim() == 2, "Input must be a 2D tensor."
@@ -325,7 +328,7 @@ class Transformer(nn.Module):
         self.norm = nn.LayerNorm(dim)
         self.layers = nn.ModuleList([])
         for i in range(depth):
-            layer_type = "Linear" if i == depth-1 else "BitLinear"
+            layer_type = "Linear" if i == depth - 1 else "BitLinear"
             self.layers.append(
                 nn.ModuleList(
                     [
@@ -334,13 +337,10 @@ class Transformer(nn.Module):
                             heads=heads,
                             dim_head=dim_head,
                             dropout=dropout,
-                            layer_type=layer_type
+                            layer_type=layer_type,
                         ),
                         FeedForward(
-                            dim,
-                            mlp_dim,
-                            dropout=dropout,
-                            layer_type=layer_type
+                            dim, mlp_dim, dropout=dropout, layer_type=layer_type
                         ),
                     ]
                 )
@@ -444,9 +444,6 @@ class ViT(nn.Module):
                 module.set_qfactor(qfactor)
 
 
-
-
-
 def TeTRABackbone(image_size=[322, 322]):
     return ViT(
         image_size=image_size[0],  # Smaller image size for reduced complexity
@@ -466,8 +463,8 @@ def TeTRABackbone(image_size=[322, 322]):
 # ==========================================================================================
 
 
-
 # ============ Bag of Learnable Queries Aggregation ===============
+
 
 class BoQBlock(torch.nn.Module):
     def __init__(self, in_dim, num_queries, nheads=8):
@@ -615,7 +612,6 @@ class GeM(nn.Module):
 
 
 # ============ MixVPR Aggregation ===============
-
 
 
 class FeatureMixerLayer(nn.Module):
@@ -847,9 +843,6 @@ class SALAD(nn.Module):
         return f
 
 
-
-
-
 def get_aggregator(agg_arch, desc_divider_factor=None):
     image_size = (322, 322)
     features_dim = [530, 768]
@@ -902,45 +895,54 @@ def get_aggregator(agg_arch, desc_divider_factor=None):
             config["row_dim"] = config["row_dim"] // desc_divider_factor
         return BoQ(**config)
 
-class TeTRAModel(nn.Module): 
-    def __init__(self, aggregation_type="boq", descriptor_div: int=1): 
+
+class TeTRAModel(nn.Module):
+    def __init__(self, aggregation_type="boq", descriptor_div: int = 1):
         super().__init__()
         self.backbone = TeTRABackbone()
         self.aggregation = get_aggregator(aggregation_type, descriptor_div)
 
-    def forward(self, x): 
+    def forward(self, x):
         x = self.backbone(x)
-        x = self.aggregation(x) 
-        return F.normalize(x, p=2, dim=-1) 
-    
+        x = self.aggregation(x)
+        return F.normalize(x, p=2, dim=-1)
+
     def deploy(self, use_bitblas=True):
         if hasattr(self.backbone, "deploy"):
             self.backbone.deploy(use_bitblas=use_bitblas)
 
 
-def load_tetra_statedict(aggregation_type: str, descriptor_div: int): 
+def load_tetra_statedict(aggregation_type: str, descriptor_div: int):
     directory = os.path.join(os.path.dirname(__file__), "weights/TeTRA")
     folders = os.listdir(directory)
     chosen_folder = None
-    for folder in folders: 
-        if aggregation_type.lower() in folder.lower() and f"DescDividerFactor[{descriptor_div}]" in folder:
+    for folder in folders:
+        if (
+            aggregation_type.lower() in folder.lower()
+            and f"DescDividerFactor[{descriptor_div}]" in folder
+        ):
             chosen_folder = folder
-            break 
+            break
 
-    if chosen_folder is None: 
-        raise ValueError(f"No folder found for aggregation type {aggregation_type} and descriptor divider factor {descriptor_div}")
-    path = os.path.join(directory, chosen_folder, os.listdir(os.path.join(directory, chosen_folder))[0])
-    return torch.load(path, map_location="cpu", weights_only=True)['state_dict']
+    if chosen_folder is None:
+        raise ValueError(
+            f"No folder found for aggregation type {aggregation_type} and descriptor divider factor {descriptor_div}"
+        )
+    path = os.path.join(
+        directory, chosen_folder, os.listdir(os.path.join(directory, chosen_folder))[0]
+    )
+    return torch.load(path, map_location="cpu", weights_only=True)["state_dict"]
 
 
-from typing import Union 
+from typing import Union
+
 from tqdm import tqdm
 
 
 class TeTRA(SingleStageMethod):
     def __init__(
         self,
-        aggregation_type="boq", 
+        aggregation_type="boq",
         descriptor_div=1,
         name=None,
         model=None,
@@ -957,7 +959,9 @@ class TeTRA(SingleStageMethod):
         aggregation_type = self._normalize_aggregation_type(aggregation_type)
         descriptor_dim = self._get_descriptor_dim(aggregation_type, descriptor_div)
         name = f"TeTRA-{aggregation_type}-DD[{descriptor_div}]"
-        model = TeTRAModel(aggregation_type=aggregation_type, descriptor_div=descriptor_div)
+        model = TeTRAModel(
+            aggregation_type=aggregation_type, descriptor_div=descriptor_div
+        )
         sd = load_tetra_statedict(aggregation_type, descriptor_div)
         model.load_state_dict(sd)
         model.name = f"TeTRA-{aggregation_type}-DD[{descriptor_div}]"
@@ -970,15 +974,16 @@ class TeTRA(SingleStageMethod):
         binary = (desc > 0).astype(np.bool_)
         n_bytes = (binary.shape[1] + 7) // 8
         return np.packbits(binary, axis=1)[:, :n_bytes]
-    
+
     def forward(self, input: Union[Image.Image, torch.Tensor]) -> dict:
         if isinstance(input, Image.Image):
             input = self.transform(input)[None, ...]
         # Move input to the same device as the model
         return {
-            "global_desc": self._float2binary_desc(self.model(input).detach().cpu().numpy().astype(np.float32))
+            "global_desc": self._float2binary_desc(
+                self.model(input).detach().cpu().numpy().astype(np.float32)
+            )
         }
-
 
     def compute_features(
         self,
@@ -1022,41 +1027,48 @@ class TeTRA(SingleStageMethod):
         self._save_features(dataset.name, feature_dict)
         self.index = self._setup_index(database_features)
         return feature_dict
-        
+
     def _setup_index(self, desc: np.ndarray) -> faiss.Index:
         bits_per_vector = desc.shape[1] * 8
         index = faiss.IndexBinaryFlat(bits_per_vector)
         index.add(desc)
         return index
-    
+
     @staticmethod
-    def _normalize_aggregation_type(aggregation_type: str): 
-        if aggregation_type.lower() == "boq": 
+    def _normalize_aggregation_type(aggregation_type: str):
+        if aggregation_type.lower() == "boq":
             return "BoQ"
-        elif aggregation_type.lower() == "mixvpr": 
+        elif aggregation_type.lower() == "mixvpr":
             return "MixVPR"
-        elif aggregation_type.lower() == "salad": 
+        elif aggregation_type.lower() == "salad":
             return "SALAD"
-        elif aggregation_type.lower() == "gem": 
+        elif aggregation_type.lower() == "gem":
             return "GeM"
-        else: 
+        else:
             raise ValueError(f"Invalid aggregation type: {aggregation_type}")
-        
-    def _get_descriptor_dim(self, aggregation_type: str, descriptor_div: int): 
-        if aggregation_type.lower() == "boq": 
+
+    def _get_descriptor_dim(self, aggregation_type: str, descriptor_div: int):
+        if aggregation_type.lower() == "boq":
             dim = 12288 // descriptor_div
-            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
-        elif aggregation_type.lower() == "mixvpr": 
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[
+                1
+            ]
+        elif aggregation_type.lower() == "mixvpr":
             dim = 4096 // descriptor_div
-            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[
+                1
+            ]
         elif aggregation_type.lower() == "salad":
             desc_div = ["1", "2", "4", "8"]
             desc_dim = [8448, 4306, 2304, 1246]
             dim = desc_dim[desc_div.index(str(descriptor_div))]
-            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
-        elif aggregation_type.lower() == "gem": 
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[
+                1
+            ]
+        elif aggregation_type.lower() == "gem":
             dim = 2048 // descriptor_div
-            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[1]
-        else: 
+            return self._float2binary_desc(np.zeros((1, dim), dtype=np.float32)).shape[
+                1
+            ]
+        else:
             raise ValueError(f"Invalid aggregation type: {aggregation_type}")
-        

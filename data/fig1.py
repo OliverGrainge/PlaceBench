@@ -1,35 +1,95 @@
-import pandas as pd 
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import os 
 
+# --- Unified Style for IROS ---
+plt.style.use("seaborn-v0_8-whitegrid")
+plt.rcParams.update(
+    {
+        "font.family": "serif",
+        "font.size": 10,
+        "axes.labelsize": 11,
+        "axes.titlesize": 11,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "text.usetex": False,  # Disable LaTeX rendering if not needed
+    }
+)
 
+DATASET = "MSLS"
 df = pd.read_csv("results.csv")
+df = df[df["Dataset"] == DATASET].copy()
 
+# Define a consistent color for the scatter points
+scatter_color = "#2F5597"  # Dark blue
 
-print(df.head())
+# Define markers and colors for specific models
+model_styles = {
+    'CosPlaces': {'marker': 's', 'label': 'CosPlaces', 'color': '#2F5597'},  # Dark blue square
+    'TeTRA': {'marker': '^', 'label': 'TeTRA', 'color': '#C00000'},          # Red triangle
+    'EigenPlaces': {'marker': 'D', 'label': 'EigenPlaces', 'color': '#548235'}, # Green diamond
+    'DINO': {'marker': 'P', 'label': 'DINO', 'color': '#7030A0'}             # Purple plus
+}
 
-# Filter for Pitts30k dataset and calculate total memory
-pitts_data = df[df['Dataset'] == 'Pitts30k'].copy()
-pitts_data['Total Memory'] = pitts_data['Model Memory (MB)'] + pitts_data['DB Memory (MB)']
+# Default style for other models
+default_style = {'marker': 'o', 'label': 'Other Models', 'color': '#808080'}  # Gray
 
-# Create scatter plot
-plt.figure(figsize=(10, 6))
-plt.scatter(pitts_data['Total Memory'], pitts_data['Accuracy (R@1)'], alpha=0.6)
+# Create the figure
+plt.figure(figsize=(7, 4))
 
-# Add labels for each point
-for idx, row in pitts_data.iterrows():
-    plt.annotate(row['Method'], 
-                (row['Total Memory'], row['Accuracy (R@1)']),
-                xytext=(5, 5), 
-                textcoords='offset points')
+# Create scatter plots by model type
+for idx, row in df.iterrows():
+    if any(model in row['Method'] for model in ['CosPlaces', 'EigenPlaces', 'TeTRA', 'DINO']):
+        for model, style in model_styles.items():
+            if model in row['Method']:
+                plt.scatter(
+                    row["DB Memory (MB)"],
+                    row["Accuracy (R@1)"],
+                    alpha=0.8,
+                    s=100,
+                    c=style['color'],
+                    marker=style['marker'],
+                    edgecolor='white',
+                    linewidth=1,
+                    label=style['label']
+                )
+                break
+    else:
+        plt.scatter(
+            row["DB Memory (MB)"],
+            row["Accuracy (R@1)"],
+            alpha=0.8,
+            s=100,
+            c=default_style['color'],
+            marker=default_style['marker'],
+            edgecolor='white',
+            linewidth=1,
+            label=default_style['label']
+        )
 
-# Customize the plot
-plt.xlabel('Total Memory (MB)')
-plt.ylabel('Accuracy R@1 (%)')
-plt.title('Model Performance vs Memory Usage on Pitts30k')
-plt.grid(True, linestyle='--', alpha=0.7)
+# Add legend (with duplicate labels removed)
+handles, labels = plt.gca().get_legend_handles_labels()
+by_label = dict(zip(labels, handles))
+plt.legend(by_label.values(), by_label.keys(), 
+          loc='best', 
+          fontsize=8, 
+          frameon=True)
 
-# Add some padding to the axes
-plt.margins(0.1)
+# Axis labels and title
+plt.xlabel("Database Memory (MB)")
+plt.ylabel("Accuracy R@1 (%)")
+plt.title(f"Model Performance vs. Database Memory Usage on {DATASET}")
 
+# Customize spines
+ax = plt.gca()
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.spines["left"].set_linewidth(0.5)
+ax.spines["bottom"].set_linewidth(0.5)
+
+# Adjust layout and save
 plt.tight_layout()
+os.makedirs("figures", exist_ok=True)
+plt.savefig("figures/scatter_performance_vs_db_memory.jpg", dpi=300, bbox_inches='tight')
 plt.show()

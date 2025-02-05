@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import resnet50 
-from .base import SingleStageMethod
 import torchvision.transforms as T
+from torchvision.models import resnet50
+
+from .base import SingleStageMethod
 
 
 class ResNet(nn.Module):
@@ -99,18 +100,18 @@ class MixVPRModel(nn.Module):
         return x
 
 
-
 class MixVPR(SingleStageMethod):
     def __init__(
         self,
         name="MixVPR",
         model=None,
-        transform=T.Compose([
-            T.Resize((320, 320), interpolation=T.InterpolationMode.BICUBIC),
-            T.ToTensor(),
-            T.Normalize([0.485, 0.456, 0.406],
-                        [0.229, 0.224, 0.225])
-        ]),
+        transform=T.Compose(
+            [
+                T.Resize((320, 320), interpolation=T.InterpolationMode.BICUBIC),
+                T.ToTensor(),
+                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        ),
         descriptor_dim=4096,
         search_dist="cosine",
     ):

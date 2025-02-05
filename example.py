@@ -5,14 +5,42 @@ from tabulate import tabulate  # Add this import
 
 import config
 from datasets import MSLS, SFXL, Essex3in1, Pitts30k, Tokyo247
-from methods import DinoV2_BoQ, DinoV2_Salad, EigenPlaces, ResNet50_BoQ, MixVPR, TeTRA
-from metrics import (database_memory, extraction_latency, matching_latency,
-                     model_memory, ratk)
+from methods import (
+    CosPlacesD32,
+    CosPlacesD64,
+    CosPlacesD128,
+    CosPlacesD512,
+    CosPlacesD1024,
+    CosPlacesD2048,
+    DinoV2_BoQ,
+    DinoV2_Salad,
+    EigenPlacesD128,
+    EigenPlacesD256,
+    EigenPlacesD512,
+    EigenPlacesD2048,
+    MixVPR,
+    ResNet50_BoQ,
+    TeTRA,
+)
+from metrics import (
+    database_memory,
+    extraction_latency,
+    matching_latency,
+    model_memory,
+    ratk,
+)
 
 output_file = "data/results.csv"
-#methods = [DinoV2_Salad, EigenPlaces, DinoV2_BoQ, ResNet50_BoQ, MixVPR]
-methods = [TeTRA]
-datasets = [(Essex3in1, config.Essex3in1_root), (Pitts30k, config.Pitts30k_root)]
+# methods = [DinoV2_Salad, EigenPlaces, DinoV2_BoQ, ResNet50_BoQ, MixVPR, TeTRA]
+methods = [
+    CosPlacesD512,
+    CosPlacesD1024,
+    CosPlacesD2048,
+    EigenPlacesD256,
+    EigenPlacesD512,
+    EigenPlacesD2048,
+]
+datasets = [(Pitts30k, config.Pitts30k_root)]
 
 # Prepare data for CSV
 csv_data = []
@@ -31,7 +59,7 @@ headers = [
 for method_type in methods:
     for dataset_type, root in datasets:
         dataset = dataset_type(root)
-        method = method_type(descriptor_div=2)
+        method = method_type()
         method.compute_features(dataset, batch_size=128, num_workers=8)
 
         recalls = ratk(method, dataset, topks=[1, 5, 10])
@@ -52,7 +80,7 @@ for method_type in methods:
 # Read existing CSV data if it exists
 existing_data = {}
 if os.path.exists(output_file):
-    with open(output_file, 'r', newline='') as f:
+    with open(output_file, "r", newline="") as f:
         reader = csv.reader(f)
         headers = next(reader)  # Skip header row
         for row in reader:
