@@ -8,11 +8,11 @@ plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update(
     {
         "font.family": "serif",
-        "font.size": 10,
-        "axes.labelsize": 11,
-        "axes.titlesize": 11,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
+        "font.size": 11,
+        "axes.labelsize": 12,
+        "axes.titlesize": 12,
+        "xtick.labelsize": 11,
+        "ytick.labelsize": 11,
         "text.usetex": False,  # Disable LaTeX rendering if not needed
     }
 )
@@ -106,7 +106,7 @@ ax2.set_xlabel("")  # Remove individual x-label
 plt.suptitle(f"{DATASET} R@1 vs. Matching Latency", y=0.98)
 
 # Add a single x-label with the same style as y-label (moved up slightly)
-fig.text(0.5, 0.04, "Matching Latency (ms)", ha='center', va='center', fontsize=11, fontfamily='serif')
+fig.text(0.5, 0.04, "Matching Latency (ms)", ha='center', va='center', fontsize=12, fontfamily='serif')
 
 # Add legend to the first axis only (with duplicate labels removed)
 handles, labels = ax1.get_legend_handles_labels()
@@ -135,5 +135,5 @@ ax2.plot((-d,+d), (-d,+d), **kwargs)
 ax2.plot((-d,+d), (1-d,1+d), **kwargs)
 
 os.makedirs("figures", exist_ok=True)
-plt.savefig("figures/scatter_performance_vs_latency.jpg", dpi=300, bbox_inches='tight')
+plt.savefig("figures/fig2.jpg", dpi=300, bbox_inches='tight')
 plt.show()

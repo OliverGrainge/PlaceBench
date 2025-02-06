@@ -8,11 +8,11 @@ plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update(
     {
         "font.family": "serif",
-        "font.size": 10,
-        "axes.labelsize": 11,
-        "axes.titlesize": 11,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
+        "font.size": 11,
+        "axes.labelsize": 12,
+        "axes.titlesize": 12,
+        "xtick.labelsize": 11,
+        "ytick.labelsize": 11,
         "text.usetex": False,  # Disable LaTeX rendering if not needed
     }
 )
@@ -132,5 +132,5 @@ ax2.plot((-d,+d), (-d,+d), **kwargs)
 ax2.plot((-d,+d), (1-d,1+d), **kwargs)
 
 os.makedirs("figures", exist_ok=True)
-plt.savefig("figures/scatter_performance_vs_db_memory.jpg", dpi=300, bbox_inches='tight')
+plt.savefig("figures/fig1.jpg", dpi=300, bbox_inches='tight')
 plt.show()

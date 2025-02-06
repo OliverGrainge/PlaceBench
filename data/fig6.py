@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 import os 
 
-
-# --- Unified Style for IROS ---
 plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update(
     {
@@ -19,7 +17,6 @@ plt.rcParams.update(
 )
 
 DATASET = "Tokyo247"
-# Define methods to include in the plot
 METHODS_TO_INCLUDE = [
     "ResNet50-BoQ",
     "DinoV2-BoQ",
@@ -40,48 +37,73 @@ METHOD_NAMES_MAP = {
     "TeTRA-BoQ-DD[1]": "TeTRA-Salad",
     "TeTRA-BoQ-DD[2]": "TeTRA-BOQ",
 }
+
 df = pd.read_csv("results.csv")
 df = df[df["Dataset"] == DATASET].copy()
 # Filter dataframe to only include selected methods
 df = df[df["Method"].isin(METHODS_TO_INCLUDE)]
 
+# Map the method names to their new labels
+df["Method"] = df["Method"].map(METHOD_NAMES_MAP)
 # Set the Method column as categorical with the desired order
-df["Method"] = pd.Categorical(df["Method"], categories=METHODS_TO_INCLUDE, ordered=True)
+df["Method"] = pd.Categorical(
+    df["Method"], 
+    categories=[METHOD_NAMES_MAP[m] for m in METHODS_TO_INCLUDE], 
+    ordered=True
+)
+
 # Sort the dataframe based on the categorical order
 df = df.sort_values("Method")
 
-# Define colors
-tetra_color = "#2F5597"  # Dark blue for TeTRA
-other_color = "#C55A11"  # Dark orange for other methods
+# Define colors for stacked bars
 
-# Assign color based on method name
-colors = [tetra_color if "TeTRA" in method else other_color for method in df["Method"]]
+# Define colors for stacked bars
+tetra_colors = ["#2F5597", "#ED7D31"]  # Dark and light blue for TeTRA
+
+if df['Matching Latency (ms)'].isna().any() or (df['Matching Latency (ms)'] <= 0).any():
+    print("Warning: Missing or invalid values found in Matching Latency column:")
+    print(df[['Method', 'Matching Latency (ms)']])
+    raise ValueError("Matching Latency column contains missing or invalid values")
 
 # Create figure
 plt.figure(figsize=(7, 4))
 
-# Plot bar chart
-bars = plt.bar(df["Method"], df["Matching Latency (ms)"], color=colors, width=0.6)
+# Create stacked bar chart
+bottom_bars = []
+top_bars = []
+for i, (method, data) in enumerate(df.iterrows()):
+    bottom = plt.bar(data["Method"], data["Extraction Latency (ms)"], 
+                    color=tetra_colors[1], width=0.6)
+    top = plt.bar(data["Method"], data['Matching Latency (ms)'], 
+                  bottom=data["Extraction Latency (ms)"],
+                  color=tetra_colors[0], width=0.6)
+    bottom_bars.append(bottom)
+    top_bars.append(top)
 
 # Axis labels and title
-plt.ylabel("Matching Latency (ms)")
+plt.ylabel("Latency (ms)")
 plt.xlabel("Method")
-plt.title(f"Matching Latency Comparison on {DATASET}")
+plt.title(f"Latency Comparison on {DATASET}")
 
 # Rotate x-labels for readability
 plt.xticks(rotation=45, ha="right")
 
+# Add legend
+plt.legend(["Extraction Latency", "Matching Latency"], loc='upper right')
+
 # Annotate bars with Accuracy (R@1)
-for i, bar in enumerate(bars):
-    height = bar.get_height()
+for i, (method, method_data) in enumerate(df.iterrows()):
+    total_height = method_data["Matching Latency (ms)"] + method_data["Extraction Latency (ms)"]
+    
     plt.text(
-        bar.get_x() + bar.get_width() / 2.0,
-        height + 0.5,
-        f'R@1: {df["Accuracy (R@1)"].iloc[i]:.1f}%',
+        i,
+        total_height + 0.5,
+        f'{method_data["Accuracy (R@1)"]:.1f}%',
         ha="center",
         va="bottom",
         fontsize=9,
     )
+
 
 # Customize spines
 ax = plt.gca()
@@ -93,5 +115,5 @@ ax.spines["bottom"].set_linewidth(0.5)
 # Adjust layout and save
 plt.tight_layout()
 os.makedirs("figures", exist_ok=True)
-plt.savefig("figures/fig3.jpg", dpi=300, bbox_inches='tight')
+plt.savefig("figures/fig6.jpg", dpi=300, bbox_inches='tight')
 plt.show()
