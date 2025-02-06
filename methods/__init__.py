@@ -17,4 +17,5 @@ from .eigenplaces import (
 )
 from .mixvpr import MixVPR
 from .resnet50_boq import ResNet50_BoQ
+from .netvlad_sp import NetVLAD_SP
 from .tetra import TeTRA

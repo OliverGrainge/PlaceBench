@@ -20,6 +20,7 @@ from methods import (
     EigenPlacesD2048,
     MixVPR,
     ResNet50_BoQ,
+    NetVLAD_SP,
     TeTRA,
 )
 from metrics import (
@@ -62,8 +63,10 @@ methods = [
     
 ]
 
-datasets = [(Tokyo247, config.Tokyo247_root), (MSLS, config.MSLS_root),(Pitts30k, config.Pitts30k_root)]
 
+datasets = [(Tokyo247, config.Tokyo247_root), (MSLS, config.MSLS_root),(Pitts30k, config.Pitts30k_root)]
+methods = [NetVLAD_SP]
+datasets = [(Pitts30k, config.Pitts30k_root)]
 # Prepare data for CSV
 csv_data = []
 headers = [
@@ -80,28 +83,28 @@ headers = [
 
 for dataset_type, root in datasets:
     for method_type in methods:
-        try:
-            dataset = dataset_type(root)
-            # Handle both regular classes and lambda functions
-            method = method_type() if callable(method_type) else method_type
-            method.compute_features(dataset, batch_size=128, num_workers=8)
+        #try:
+        dataset = dataset_type(root)
+        # Handle both regular classes and lambda functions
+        method = method_type() if callable(method_type) else method_type
+        method.compute_features(dataset, batch_size=12, num_workers=0)
 
-            recalls = ratk(method, dataset, topks=[1, 5, 10])
-            row = [
-                method.name,
-                dataset.name,
-                f"{recalls[0]:.2f}",
-                f"{recalls[1]:.2f}",
-                f"{recalls[2]:.2f}",
-                f"{extraction_latency(method, dataset):.2f}",
-                f"{matching_latency(method, dataset):.2f}",
-                f"{model_memory(method, dataset):.2f}",
-                f"{database_memory(method, dataset):.2f}",
-            ]
-            csv_data.append(row)
-        except Exception as e:
-            print(f"Error processing method")
-            continue
+        recalls = ratk(method, dataset, topks=[1, 5, 10])
+        row = [
+            method.name,
+            dataset.name,
+            f"{recalls[0]:.2f}",
+            f"{recalls[1]:.2f}",
+            f"{recalls[2]:.2f}",
+            f"{extraction_latency(method, dataset):.2f}",
+            f"{matching_latency(method, dataset):.2f}",
+            f"{model_memory(method, dataset):.2f}",
+            f"{database_memory(method, dataset):.2f}",
+        ]
+        csv_data.append(row)
+        #except Exception as e:
+        #    print(f"Error processing method")
+        #    continue
 
 
 # Read existing CSV data if it exists
