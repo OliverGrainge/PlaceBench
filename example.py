@@ -18,6 +18,7 @@ from methods import (
     EigenPlacesD256,
     EigenPlacesD512,
     EigenPlacesD2048,
+    #EigenPlacesD2048INT8,
     MixVPR,
     ResNet50_BoQ,
     NetVLAD_SP,
