@@ -53,8 +53,6 @@ class NetVLAD_SP_Model(nn.Module):
     
 
 
-
-
 class NetVLAD_SP(SingleStageMethod):
     def __init__(
         self,

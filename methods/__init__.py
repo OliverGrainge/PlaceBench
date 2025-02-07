@@ -14,6 +14,7 @@ from .eigenplaces import (
     EigenPlacesD256,
     EigenPlacesD512,
     EigenPlacesD2048,
+    EigenPlacesD2048INT8,
 )
 from .mixvpr import MixVPR
 from .resnet50_boq import ResNet50_BoQ
