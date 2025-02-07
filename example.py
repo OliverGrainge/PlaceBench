@@ -1,6 +1,5 @@
 import csv
 import os
-
 from tabulate import tabulate  # Add this import
 
 import config
@@ -18,7 +17,7 @@ from methods import (
     EigenPlacesD256,
     EigenPlacesD512,
     EigenPlacesD2048,
-    #EigenPlacesD2048INT8,
+    EigenPlacesD2048INT8,
     MixVPR,
     ResNet50_BoQ,
     NetVLAD_SP,
@@ -66,7 +65,7 @@ methods = [
 
 
 datasets = [(Tokyo247, config.Tokyo247_root), (MSLS, config.MSLS_root),(Pitts30k, config.Pitts30k_root)]
-methods = [NetVLAD_SP]
+methods = [EigenPlacesD2048INT8]
 datasets = [(Pitts30k, config.Pitts30k_root)]
 # Prepare data for CSV
 csv_data = []
@@ -120,15 +119,26 @@ if os.path.exists(output_file):
                 continue
             # Use Method and Dataset as key
             key = (row[0], row[1])
-            existing_data[key] = row
+            # Store each metric in a dictionary
+            existing_data[key] = {headers[i]: row[i] for i in range(len(headers))}
 
 # Update existing data with new results
 for row in csv_data:
     key = (row[0], row[1])  # Method and Dataset
-    existing_data[key] = row
+    if key not in existing_data:
+        # Create new entry with all metrics
+        existing_data[key] = {headers[i]: row[i] for i in range(len(headers))}
+    else:
+        # Update only non-empty values
+        for i, value in enumerate(row):
+            if value:  # Only update if the value is not empty
+                existing_data[key][headers[i]] = value
 
 # Convert back to list format for writing and display
-final_data = list(existing_data.values())
+final_data = []
+for key in existing_data:
+    row = [existing_data[key][header] for header in headers]
+    final_data.append(row)
 
 # Print updated table
 print("\nResults:")

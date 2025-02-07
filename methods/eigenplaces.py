@@ -222,8 +222,6 @@ class EigenPlacesINT8Model(nn.Module):
         return weights_dict
     
     
-
-
 class EigenPlacesD2048INT8(SingleStageMethod):
     def __init__(
         self,

@@ -2,6 +2,10 @@
 !pitts30k_gt.npy
 !pitts30k_query.npy
 !pitts30k_database.npy
+!essex3in1_gt.npy
+!essex3in1_query.npy
+!essex3in1_database.npy
+
 *__pycache__*
 *.faiss
 *.pkl
