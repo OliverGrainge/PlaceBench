@@ -8,6 +8,7 @@ from onnx import numpy_helper
 import onnxruntime as ort 
 from onnxruntime.quantization import quantize_dynamic, QuantType
 import numpy as np 
+import onnx 
 
 from .base import SingleStageMethod
 
@@ -165,7 +166,7 @@ class EigenPlacesD2048(SingleStageMethod):
 def quantize_eigenplaces_model(model: nn.Module, model_name: str): 
     model.eval() 
     dummy_input = torch.randn(1, 3, 512, 512)
-    os.makedirs(os.path.dirname(__file__), "weights/EigenPlaces", exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(__file__), "weights/EigenPlaces"), exist_ok=True)
     onnx_path = os.path.join(os.path.dirname(__file__), "weights/EigenPlaces", "tmp.onnx")
     torch.onnx.export(model,               # model being run
                  dummy_input,          # model input (or a tuple for multiple inputs)
@@ -174,7 +175,7 @@ def quantize_eigenplaces_model(model: nn.Module, model_name: str):
                  opset_version=11,     # the ONNX version to export the model to
                  do_constant_folding=True) 
 
-    quantized_model_path = os.path.join(os.path.dirname(__file__), "weights/EigenPlaces", f"{model_name}", ".onnx")
+    quantized_model_path = os.path.join(os.path.dirname(__file__), "weights/EigenPlaces", f"{model_name}.onnx")
 
     quantize_dynamic(
         model_input=onnx_path,
@@ -186,15 +187,18 @@ def quantize_eigenplaces_model(model: nn.Module, model_name: str):
 
 class EigenPlacesINT8Model(nn.Module): 
     def __init__(self, model_name: str): 
-        path = os.path.join(os.path.dirname(__file__), "weights/EigenPlaces", f"{model_name}", ".onnx")
+        super().__init__()
+        path = os.path.join(os.path.dirname(__file__), "weights/EigenPlaces", f"{model_name}.onnx")
+        self.model = onnx.load(path)
+        self.device = "cpu"
         self.session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
 
     def forward(self, x: torch.Tensor): 
         x = x.detach().cpu().numpy()
-        input_name = self.model.get_inputs()[0].name
+        input_name = self.session.get_inputs()[0].name
         outputs = [] 
         for img in x: 
-            outputs.append(self.session.run(None, {input_name: img})[0])
+            outputs.append(self.session.run(None, {input_name: img[None, ...]})[0])
         return torch.tensor(np.vstack(outputs))
     
     def to(self, device):
@@ -216,6 +220,7 @@ class EigenPlacesINT8Model(nn.Module):
             tensor = numpy_helper.to_array(initializer)
             weights_dict[name] = tensor
         return weights_dict
+    
     
 
 
