@@ -2,7 +2,6 @@ import numpy as np
 
 
 def model_memory(method, dataset) -> float:
-    method.compute_features(dataset)
     sd = method.state_dict()
 
     # Calculate memory based on parameter dtype

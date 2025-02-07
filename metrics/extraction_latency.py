@@ -4,7 +4,7 @@ import numpy as np
 
 
 def extraction_latency(
-    method, dataset, warmup_iter: int = 10, num_samples: int = 100, device: str = "cuda"
+    method, dataset, warmup_iter: int = 10, num_samples: int = 100, device: str = "cpu"
 ) -> float:
     dl = dataset.dataloader(batch_size=1, num_workers=0, transform=method.transform)
     for batch, idx in dl:

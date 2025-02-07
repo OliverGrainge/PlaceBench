@@ -63,11 +63,15 @@ methods = [
     
 ]
 
+# Define which metrics to run
+# Format: (method, dataset, [metrics_to_compute])
+experiments_to_run = [
+    # Example configurations:
+    (EigenPlacesD512, Essex3in1, ["Extraction Latency (ms)"]),
 
-datasets = [(Tokyo247, config.Tokyo247_root), (MSLS, config.MSLS_root),(Pitts30k, config.Pitts30k_root)]
-methods = [EigenPlacesD2048INT8]
-datasets = [(Pitts30k, config.Pitts30k_root)]
-# Prepare data for CSV
+
+]
+
 csv_data = []
 headers = [
     "Method",
@@ -81,31 +85,42 @@ headers = [
     "DB Memory (MB)",
 ]
 
-for dataset_type, root in datasets:
-    for method_type in methods:
-        #try:
-        dataset = dataset_type(root)
-        # Handle both regular classes and lambda functions
-        method = method_type() if callable(method_type) else method_type
+for method_type, dataset_type, metrics_to_compute in experiments_to_run:
+    # Get dataset root from config based on dataset type
+    root = getattr(config, f"{dataset_type.__name__}_root")
+    print("loading dataset")
+    dataset = dataset_type(root)
+    print("loading method")
+    method = method_type() if callable(method_type) else method_type
+    print("loaded")
+
+    # Initialize row with method and dataset
+    row = [method.name, dataset.name] + [""] * (len(headers) - 2)
+
+    # Compute only requested metrics
+    if any(metric.startswith("Accuracy") for metric in metrics_to_compute):
         method.compute_features(dataset, batch_size=12, num_workers=0)
-
         recalls = ratk(method, dataset, topks=[1, 5, 10])
-        row = [
-            method.name,
-            dataset.name,
-            f"{recalls[0]:.2f}",
-            f"{recalls[1]:.2f}",
-            f"{recalls[2]:.2f}",
-            f"{extraction_latency(method, dataset):.2f}",
-            f"{matching_latency(method, dataset):.2f}",
-            f"{model_memory(method, dataset):.2f}",
-            f"{database_memory(method, dataset):.2f}",
-        ]
-        csv_data.append(row)
-        #except Exception as e:
-        #    print(f"Error processing method")
-        #    continue
+        if "Accuracy (R@1)" in metrics_to_compute:
+            row[headers.index("Accuracy (R@1)")] = f"{recalls[0]:.2f}"
+        if "Accuracy (R@5)" in metrics_to_compute:
+            row[headers.index("Accuracy (R@5)")] = f"{recalls[1]:.2f}"
+        if "Accuracy (R@10)" in metrics_to_compute:
+            row[headers.index("Accuracy (R@10)")] = f"{recalls[2]:.2f}"
 
+    if "Extraction Latency (ms)" in metrics_to_compute:
+        row[headers.index("Extraction Latency (ms)")] = f"{extraction_latency(method, dataset):.2f}"
+    
+    if "Matching Latency (ms)" in metrics_to_compute:
+        row[headers.index("Matching Latency (ms)")] = f"{matching_latency(method, dataset):.2f}"
+    
+    if "Model Memory (MB)" in metrics_to_compute:
+        row[headers.index("Model Memory (MB)")] = f"{model_memory(method, dataset):.2f}"
+    
+    if "DB Memory (MB)" in metrics_to_compute:
+        row[headers.index("DB Memory (MB)")] = f"{database_memory(method, dataset):.2f}"
+
+    csv_data.append(row)
 
 # Read existing CSV data if it exists
 existing_data = {}
