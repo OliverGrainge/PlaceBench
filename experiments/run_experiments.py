@@ -85,14 +85,9 @@ headers = [
 
 for method_type, dataset_type, metrics_to_compute in experiments_to_run:
     # Get dataset root from config based on dataset type
-    root = getattr(config, f"{dataset_type.__name__}_root")
-    print("loading dataset")
-    dataset = dataset_type(root)
-    print("loading method")
-    method = method_type() if callable(method_type) else method_type
-    print("loaded")
-
     # Initialize row with method and dataset
+    method = method_type() 
+    dataset = dataset_type()
     row = [method.name, dataset.name] + [""] * (len(headers) - 2)
 
     # Compute only requested metrics

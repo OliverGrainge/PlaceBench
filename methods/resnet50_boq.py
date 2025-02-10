@@ -108,3 +108,6 @@ class ResNet50_BoQINT8(SingleStageMethod):
             .numpy()
             .astype(np.float32)
         }
+    
+    def compute_features(self, dataset, batch_size=1, num_workers=0, recompute=False, device=None):
+        return super().compute_features(dataset, 1, 0, recompute, device)
