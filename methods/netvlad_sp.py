@@ -30,7 +30,7 @@ class NetVLAD_SP_Model(nn.Module):
         return torch.tensor(np.vstack(result))
     
     def to(self, device):
-        available_providers = self.session.get_providers()
+        available_providers = ort.get_available_providers()
         
         if device == "cuda":
             if 'CUDAExecutionProvider' not in available_providers:
@@ -56,7 +56,7 @@ class NetVLAD_SP_Model(nn.Module):
 class NetVLAD_SP(SingleStageMethod):
     def __init__(
         self,
-        name="NetVLAD-SP",
+        name="NetVLAD-Pruned",
         model=None,
         transform=T.Compose(
             [
@@ -72,7 +72,7 @@ class NetVLAD_SP(SingleStageMethod):
         descriptor_dim=7552,
         search_dist="cosine",
     ):
-        model_path = os.path.join(os.path.dirname(__file__), "weights/PruneVPR", "ResNet34_NetVLAD_agg_0.23_sparsity_0.297_R1_0.912.onnx")
+        model_path = os.path.join(os.path.dirname(__file__), "weights/NetVLAD-Pruned", "ResNet34_NetVLAD_agg_0.23_sparsity_0.297_R1_0.912.onnx")
         model = NetVLAD_SP_Model(model_path)
         super().__init__(name, model, transform, descriptor_dim, search_dist)
 

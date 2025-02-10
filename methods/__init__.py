@@ -6,6 +6,7 @@ from .cosplaces import (
     CosPlacesD512,
     CosPlacesD1024,
     CosPlacesD2048,
+    CosPlacesD2048INT8,
 )
 from .dinov2_boq import DinoV2_BoQ
 from .dinov2_salad import DinoV2_Salad
