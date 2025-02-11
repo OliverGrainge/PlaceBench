@@ -8,11 +8,11 @@ plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update(
     {
         "font.family": "serif",
-        "font.size": 11,
-        "axes.labelsize": 12,
-        "axes.titlesize": 12,
-        "xtick.labelsize": 11,
-        "ytick.labelsize": 11,
+        "font.size": 12,
+        "axes.labelsize": 13,
+        "axes.titlesize": 13,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
         "text.usetex": False,  # Disable LaTeX rendering if not needed
     }
 )
@@ -42,8 +42,11 @@ fig.subplots_adjust(wspace=0.05)  # Reduce space between subplots
 # Create scatter plots by model type
 for idx, row in df.iterrows():
     # Skip methods containing "GeM"
-    if "GeM" in row['Method'] or "ResNet50-BoQ" in row['Method'] or "MixVPR" in row['Method']:
+    if "GeM" in row['Method'] or "ResNet50-BoQ" in row['Method'] or "MixVPR" == row['Method'] or "INT8" in row['Method']:
         continue
+
+    print(row["Method"])
+    
     
     # Determine which axis to use based on memory value
     memory = row["DB Memory (MB)"]
@@ -79,7 +82,7 @@ for idx, row in df.iterrows():
 
 # Set the limits for each axis
 ax1.set_xlim(-10, 200)
-ax2.set_xlim(3500, 5000)
+ax2.set_xlim(2000, 5000)
 
 # Add broken axis indicators
 d = .015  # size of diagonal lines
@@ -93,10 +96,12 @@ ax2.plot((-d,+d), (1-d,1+d), **kwargs)
 
 # Customize both axes
 for ax in [ax1, ax2]:
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(True)
+    ax.spines["right"].set_visible(True)
     ax.spines["left"].set_linewidth(0.5)
     ax.spines["bottom"].set_linewidth(0.5)
+    ax.spines["top"].set_linewidth(0.5)
+    ax.spines["right"].set_linewidth(0.5)
     ax.grid(True, alpha=0.3)
     ax.set_xlabel("")
 
@@ -105,7 +110,7 @@ ax1.set_ylabel("Accuracy R@1 (%)")
 plt.suptitle(f"{DATASET} R@1 vs. Database Memory", y=0.98)
 
 # Add a single x-label
-fig.text(0.5, 0.04, "Database Memory (MB)", ha='center', va='center', fontsize=11, fontfamily='serif')
+fig.text(0.5, 0.04, "Database Memory (MB)", ha='center', va='center', fontsize=13, fontfamily='serif')
 
 # Add legend to the first axis only (with duplicate labels removed)
 handles, labels = ax1.get_legend_handles_labels()
@@ -115,7 +120,7 @@ all_labels = labels + labels2
 by_label = dict(zip(all_labels, all_handles))
 ax1.legend(by_label.values(), by_label.keys(), 
           loc='lower right', 
-          fontsize=8, 
+          fontsize=11, 
           frameon=True)
 
 # Adjust layout

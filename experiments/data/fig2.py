@@ -8,11 +8,11 @@ plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update(
     {
         "font.family": "serif",
-        "font.size": 11,
-        "axes.labelsize": 12,
-        "axes.titlesize": 12,
-        "xtick.labelsize": 11,
-        "ytick.labelsize": 11,
+        "font.size": 12,
+        "axes.labelsize": 13,
+        "axes.titlesize": 13,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
         "text.usetex": False,  # Disable LaTeX rendering if not needed
     }
 )
@@ -39,7 +39,7 @@ fig.subplots_adjust(wspace=0.05)  # Reduce space between subplots
 
 # Create scatter plots by model type
 for idx, row in df.iterrows():
-    if "GeM" in row['Method'] or "MixVPR" == row['Method'] or "ResNet50-BoQ" in row['Method']:
+    if "GeM" in row['Method'] or "ResNet50-BoQ" in row['Method'] or "MixVPR" == row['Method'] or "INT8" in row['Method']:
         continue
     
     # Determine which axis to use based on latency value
@@ -92,12 +92,14 @@ ax2.plot((-d,+d), (1-d,1+d), **kwargs)
 
 # Customize both axes
 for ax in [ax1, ax2]:
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(True)
+    ax.spines["right"].set_visible(True)
     ax.spines["left"].set_linewidth(0.5)
     ax.spines["bottom"].set_linewidth(0.5)
+    ax.spines["top"].set_linewidth(0.5)
+    ax.spines["right"].set_linewidth(0.5)
     ax.grid(True, alpha=0.3)
-    ax.set_xlabel("")  # Remove individual x-labels
+    ax.set_xlabel("")
 
 # Add labels and title
 ax1.set_ylabel("Accuracy R@1 (%)")
@@ -106,7 +108,7 @@ ax2.set_xlabel("")  # Remove individual x-label
 plt.suptitle(f"{DATASET} R@1 vs. Matching Latency", y=0.98)
 
 # Add a single x-label with the same style as y-label (moved up slightly)
-fig.text(0.5, 0.04, "Matching Latency (ms)", ha='center', va='center', fontsize=12, fontfamily='serif')
+fig.text(0.5, 0.04, "Matching Latency (ms)", ha='center', va='center', fontsize=13, fontfamily='serif')
 
 # Add legend to the first axis only (with duplicate labels removed)
 handles, labels = ax1.get_legend_handles_labels()
@@ -116,7 +118,7 @@ all_labels = labels + labels2
 by_label = dict(zip(all_labels, all_handles))
 ax1.legend(by_label.values(), by_label.keys(), 
           loc='lower right', 
-          fontsize=8, 
+          fontsize=11, 
           frameon=True)
 
 # First adjust the main layout
