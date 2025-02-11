@@ -10,6 +10,7 @@ import torch.nn as nn
 from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
+import gc 
 
 
 class SingleStageMethod(nn.Module):
@@ -78,6 +79,9 @@ class SingleStageMethod(nn.Module):
         }
         self._save_features(dataset.name, feature_dict)
         self.index = self._setup_index(database_features)
+        # Explicit cleanup
+        gc.collect()
+        torch.cuda.empty_cache()
         return feature_dict
 
     def _setup_index(self, desc: np.ndarray) -> faiss.Index:

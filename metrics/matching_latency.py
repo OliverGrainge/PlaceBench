@@ -4,7 +4,7 @@ import numpy as np
 
 
 def matching_latency(
-    method, dataset, warmup_iter: int = 10, num_samples: int = 100
+    method, dataset, warmup_iter: int = 3, num_samples: int = 10
 ) -> float:
     method.compute_features(dataset)
     dl = dataset.dataloader(batch_size=1, num_workers=0, transform=method.transform)
