@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os 
+from tabulate import tabulate
 
 plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update(
@@ -62,6 +63,26 @@ if df['DB Memory (MB)'].isna().any() or (df['DB Memory (MB)'] <= 0).any():
     print("Warning: Missing or invalid values found in DB Memory column:")
     print(df[['Method', 'DB Memory (MB)']])
     raise ValueError("DB Memory column contains missing or invalid values")
+
+# Create table of memory usage
+table_data = []
+for i, (method, data) in enumerate(df.iterrows()):
+    total_height = data["DB Memory (MB)"] + data["Model Memory (MB)"]
+    table_data.append([
+        data['Method'],
+        data['Model Memory (MB)'],
+        data['DB Memory (MB)'],
+        total_height
+    ])
+
+print("\nMemory Usage Summary:")
+print(tabulate(
+    table_data,
+    headers=['Method', 'Model Memory (MB)', 'DB Memory (MB)', 'Total Memory (MB)'],
+    tablefmt='grid',
+    floatfmt='.1f'
+))
+
 # Create figure
 plt.figure(figsize=(7, 4))
 
@@ -69,6 +90,8 @@ plt.figure(figsize=(7, 4))
 bottom_bars = []
 top_bars = []
 for i, (method, data) in enumerate(df.iterrows()):
+    total_height = data["DB Memory (MB)"] + data["Model Memory (MB)"]
+    print(data["Method"], total_height)
     bottom = plt.bar(data["Method"], data["Model Memory (MB)"], 
                     color=tetra_colors[1], width=0.6)
     top = plt.bar(data["Method"], data['DB Memory (MB)'], 
@@ -90,7 +113,6 @@ plt.legend(["Model Memory", "Database Memory"], loc='upper right', fontsize=12)
 
 # Annotate bars with Accuracy (R@1)
 for i, (method, method_data) in enumerate(df.iterrows()):
-    print(type(method_data["DB Memory (MB)"]))
     total_height = method_data["DB Memory (MB)"] + method_data["Model Memory (MB)"]
     
     plt.text(

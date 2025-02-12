@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os 
+from tabulate import tabulate
 
 plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update(
@@ -67,6 +68,26 @@ if df['Matching Latency (ms)'].isna().any() or (df['Matching Latency (ms)'] <= 0
 
 # Create figure
 plt.figure(figsize=(7, 4))
+
+# Create table of latency data
+table_data = []
+for i, (method, data) in enumerate(df.iterrows()):
+    total_latency = data['Matching Latency (ms)'] + data['Extraction Latency GPU (ms)']
+    table_data.append([
+        data['Method'],
+        data['Extraction Latency GPU (ms)'],
+        data['Matching Latency (ms)'],
+        total_latency,
+        f"{data['Accuracy (R@1)']:.1f}%"
+    ])
+
+print("\nLatency and Accuracy Summary:")
+print(tabulate(
+    table_data,
+    headers=['Method', 'Extraction (ms)', 'Matching (ms)', 'Total (ms)', 'Accuracy (R@1)'],
+    tablefmt='grid',
+    floatfmt='.2f'
+))
 
 # Create stacked bar chart
 bottom_bars = []
