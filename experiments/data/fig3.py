@@ -1,21 +1,30 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os 
+import os
 from tabulate import tabulate
 
 plt.style.use("seaborn-v0_8-whitegrid")
-plt.rcParams.update(
-    {
-        "font.family": "serif",
-        "font.size": 11,
-        "axes.labelsize": 12,
-        "axes.titlesize": 12,
-        "xtick.labelsize": 11,
-        "ytick.labelsize": 11,
-        "text.usetex": False,
-    }
-)
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 11,
+    "axes.labelsize": 13,
+    "axes.titlesize": 13,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "text.usetex": False,
+    "axes.linewidth": 1.2,  # Increased line width
+    "grid.linewidth": 0.8,
+    "lines.linewidth": 2.5,
+    "text.color": "black",  # Ensure all text is black
+    "axes.labelcolor": "black",  # Ensure axis labels are black
+    "axes.edgecolor": "black",  # Ensure axis edges are black
+    "xtick.color": "black",  # Ensure tick labels are black
+    "ytick.color": "black",  # Ensure tick labels are black
+})
+
+# Turn off all grid
+plt.rcParams['axes.grid'] = False
 
 DATASET = "Tokyo247"
 METHODS_TO_INCLUDE = [
@@ -25,114 +34,69 @@ METHODS_TO_INCLUDE = [
     "CosPlaces-D2048",
     "EigenPlaces-D2048",
     "TeTRA-BoQ-DD[1]",
-    "TeTRA-BoQ-DD[2]",
+    "TeTRA-SALAD-DD[1]",
+    "TeTRA-MixVPR-DD[1]"
 ]
 
-# Define mapping for method names
 METHOD_NAMES_MAP = {
     "ResNet50-BoQ": "ResNet50-BoQ",
     "DinoV2-BoQ": "DinoV2-BoQ",
     "DinoV2-Salad": "DinoV2-Salad",
     "CosPlaces-D2048": "CosPlaces",
     "EigenPlaces-D2048": "EigenPlaces",
-    "TeTRA-BoQ-DD[1]": "TeTRA-Salad",
-    "TeTRA-BoQ-DD[2]": "TeTRA-BOQ",
+    "TeTRA-BoQ-DD[1]": "TeTRA-BoQ",
+    "TeTRA-SALAD-DD[1]": "TeTRA-Salad",
+    "TeTRA-MixVPR-DD[1]": "TeTRA-MixVPR",
 }
 
 df = pd.read_csv("results.csv")
 df = df[df["Dataset"] == DATASET].copy()
-# Filter dataframe to only include selected methods
-df = df[df["Method"].isin(METHODS_TO_INCLUDE)]
 
-# Map the method names to their new labels
+df = df[df["Method"].isin(METHODS_TO_INCLUDE)]
 df["Method"] = df["Method"].map(METHOD_NAMES_MAP)
-# Set the Method column as categorical with the desired order
 df["Method"] = pd.Categorical(
     df["Method"], 
     categories=[METHOD_NAMES_MAP[m] for m in METHODS_TO_INCLUDE], 
     ordered=True
 )
-
-# Sort the dataframe based on the categorical order
 df = df.sort_values("Method")
+print(df)
 
-# Define colors for stacked bars
-tetra_colors = ["#2F5597", "#ED7D31"]  # Dark and light blue for TeTRA
 
-if df['DB Memory (MB)'].isna().any() or (df['DB Memory (MB)'] <= 0).any():
-    print("Warning: Missing or invalid values found in DB Memory column:")
-    print(df[['Method', 'DB Memory (MB)']])
-    raise ValueError("DB Memory column contains missing or invalid values")
+# Sort by total memory, for instance
+df_sorted = df.assign(TotalMemory = df["Model Memory (MB)"] + df["DB Memory (MB)"])
+df_sorted = df_sorted.sort_values("TotalMemory")
 
-# Create table of memory usage
-table_data = []
-for i, (method, data) in enumerate(df.iterrows()):
-    total_height = data["DB Memory (MB)"] + data["Model Memory (MB)"]
-    table_data.append([
-        data['Method'],
-        data['Model Memory (MB)'],
-        data['DB Memory (MB)'],
-        total_height
-    ])
+x = np.arange(len(df_sorted))
 
-print("\nMemory Usage Summary:")
-print(tabulate(
-    table_data,
-    headers=['Method', 'Model Memory (MB)', 'DB Memory (MB)', 'Total Memory (MB)'],
-    tablefmt='grid',
-    floatfmt='.1f'
-))
+fig, ax1 = plt.subplots(figsize=(8,4))
+ax2 = ax1.twinx()
+ax3 = ax1.twinx()  # Create a third axis
 
-# Create figure
-plt.figure(figsize=(7, 4))
+# Offset the right spine for ax3 to prevent overlap with ax2
+ax3.spines['right'].set_position(('outward', 60))
 
-# Create stacked bar chart
-bottom_bars = []
-top_bars = []
-for i, (method, data) in enumerate(df.iterrows()):
-    total_height = data["DB Memory (MB)"] + data["Model Memory (MB)"]
-    print(data["Method"], total_height)
-    bottom = plt.bar(data["Method"], data["Model Memory (MB)"], 
-                    color=tetra_colors[1], width=0.6)
-    top = plt.bar(data["Method"], data['DB Memory (MB)'], 
-                  bottom=data["Model Memory (MB)"],
-                  color=tetra_colors[0], width=0.6)
-    bottom_bars.append(bottom)
-    top_bars.append(top)
+# Plot the existing lines and add the accuracy line
+ax1.plot(x, df_sorted["TotalMemory"], 'o-', color="#ED7D31", label="Total Memory", linewidth=2.5)
+ax2.plot(x, df_sorted["Extraction Latency GPU (ms)"] + df_sorted["Matching Latency (ms)"], 
+         's--', color="#2F5597", label="Total Latency", linewidth=2.5)
+ax3.plot(x, df_sorted["Accuracy (R@1)"], '^-', color="#70AD47", label="Accuracy (R@1)", linewidth=2.5)
+ax3.set_ylim(0, 100)
 
-# Axis labels and title
-plt.ylabel("Memory (MB)")
-plt.xlabel("Method")
-plt.title(f"Memory Consumption Comparison on {DATASET}", fontsize=13)
+ax1.set_xticks(x)
+ax1.set_xticklabels(df_sorted["Method"], rotation=45, ha="right")
+ax1.set_ylabel("Total Memory (MB)")
+ax2.set_ylabel("Total Latency (ms)")
+ax3.set_ylabel("Accuracy (R@1)")
+ax1.set_title(f"Methods sorted by Memory on {DATASET}")
+ax1.grid(True, axis='y', linestyle='--', alpha=0.6, color='gray')
 
-# Rotate x-labels for readability
-plt.xticks(rotation=45, ha="right")
+# Combine legends for all three lines
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+lines3, labels3 = ax3.get_legend_handles_labels()
+ax1.legend(lines1 + lines2 + lines3, labels1 + labels2 + labels3, loc="lower right")
 
-# Add legend
-plt.legend(["Model Memory", "Database Memory"], loc='upper right', fontsize=12)
-
-# Annotate bars with Accuracy (R@1)
-for i, (method, method_data) in enumerate(df.iterrows()):
-    total_height = method_data["DB Memory (MB)"] + method_data["Model Memory (MB)"]
-    
-    plt.text(
-        i,
-        total_height + 0.5,
-        f'{method_data["Accuracy (R@1)"]:.1f}%',
-        ha="center",
-        va="bottom",
-        fontsize=11,
-    )
-
-# Customize spines
-ax = plt.gca()
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
-ax.spines["left"].set_linewidth(0.5)
-ax.spines["bottom"].set_linewidth(0.5)
-
-# Adjust layout and save
 plt.tight_layout()
-os.makedirs("figures", exist_ok=True)
-plt.savefig("figures/fig3.jpg", dpi=300, bbox_inches='tight')
+plt.savefig("figures/fig3.png", dpi=300)
 plt.show()

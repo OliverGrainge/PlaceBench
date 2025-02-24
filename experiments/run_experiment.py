@@ -77,12 +77,20 @@ METHOD_MAP = {
     'netvlad_sp': NetVLAD_SP,
     'tetra-boq-dd1': partial(TeTRA, aggregation_type="boq", descriptor_div=1),
     'tetra-boq-dd2': partial(TeTRA, aggregation_type="boq", descriptor_div=2),
+    'tetra-boq-dd4': partial(TeTRA, aggregation_type="boq", descriptor_div=4),
+    'tetra-boq-dd8': partial(TeTRA, aggregation_type="boq", descriptor_div=8),
     'tetra-gem-dd1': partial(TeTRA, aggregation_type="gem", descriptor_div=1),
     'tetra-gem-dd2': partial(TeTRA, aggregation_type="gem", descriptor_div=2),
+    'tetra-gem-dd4': partial(TeTRA, aggregation_type="gem", descriptor_div=4),
+    'tetra-gem-dd8': partial(TeTRA, aggregation_type="gem", descriptor_div=8),
     'tetra-salad-dd1': partial(TeTRA, aggregation_type="salad", descriptor_div=1),
     'tetra-salad-dd2': partial(TeTRA, aggregation_type="salad", descriptor_div=2),
+    'tetra-salad-dd4': partial(TeTRA, aggregation_type="salad", descriptor_div=4),
+    'tetra-salad-dd8': partial(TeTRA, aggregation_type="salad", descriptor_div=8),
     'tetra-mixvpr-dd1': partial(TeTRA, aggregation_type="mixvpr", descriptor_div=1),
     'tetra-mixvpr-dd2': partial(TeTRA, aggregation_type="mixvpr", descriptor_div=2),
+    'tetra-mixvpr-dd4': partial(TeTRA, aggregation_type="mixvpr", descriptor_div=4),
+    'tetra-mixvpr-dd8': partial(TeTRA, aggregation_type="mixvpr", descriptor_div=8),
 }
 
 # Dataset name mappings
@@ -163,7 +171,7 @@ def main():
 
     # Compute only requested metrics
     if any(metric.startswith("Accuracy") for metric in metrics_to_compute):
-        features =method.compute_features(dataset, batch_size=12, num_workers=0)
+        features = method.compute_features(dataset, batch_size=64, num_workers=8)
         recalls = ratk(method, dataset, topks=[1, 5, 10])
         del features  # Explicit cleanup
         gc.collect()

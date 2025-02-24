@@ -8,11 +8,19 @@ plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update({
     "font.family": "serif",
     "font.size": 11,
-    "axes.labelsize": 12,
-    "axes.titlesize": 12,
-    "xtick.labelsize": 11,
-    "ytick.labelsize": 11,
+    "axes.labelsize": 13,
+    "axes.titlesize": 13,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
     "text.usetex": False,
+    "axes.linewidth": 0.8,  # Reduced from 1.2
+    "grid.linewidth": 0.8,
+    "lines.linewidth": 2.5,
+    "text.color": "black",
+    "axes.labelcolor": "black",
+    "axes.edgecolor": "lightgray",  # Changed to light gray for the radar ring
+    "xtick.color": "black",
+    "ytick.color": "black",
 })
 plt.rcParams['axes.grid'] = False
 
@@ -65,28 +73,22 @@ datasets = [
 ]
 
 # Create a figure
-fig = plt.figure(figsize=(15.5, 4.2))  # Wider and shorter than before
-fig.suptitle("Visual Place Recognition Performance Comparison", y=1.02, fontsize=14)  # Increased y position
+fig = plt.figure(figsize=(15, 3))
+fig.suptitle("Visual Place Recognition Resource-Accuracy Trade-off", y=0.99, fontsize=16)
 
-# Use a gridspec with 2 rows and 20 columns.
-gs = gridspec.GridSpec(2, 20, figure=fig, hspace=0.35, top=0.85)  # Added top parameter to leave space for title
+# Use a gridspec with 1 row and 28 columns (4 columns per plot)
+gs = gridspec.GridSpec(1, 28, figure=fig)
 
-# Define gridspec slices for each dataset's subplot.
-# Top row (row 0): 3 subplots, each 4 columns wide, centered (columns 4–8, 8–12, 12–16)
-top_axes_positions = [
+# Define gridspec slices for each dataset's subplot in a single row
+axes_positions = [
+    (0, slice(0, 4)),
     (0, slice(4, 8)),
     (0, slice(8, 12)),
-    (0, slice(12, 16))
+    (0, slice(12, 16)),
+    (0, slice(16, 20)),
+    (0, slice(20, 24)),
+    (0, slice(24, 28))
 ]
-# Bottom row (row 1): 4 subplots, each 4 columns wide, centered (columns 2–6, 6–10, 10–14, 14–18)
-bottom_axes_positions = [
-    (1, slice(2, 6)),
-    (1, slice(6, 10)),
-    (1, slice(10, 14)),
-    (1, slice(14, 18))
-]
-
-axes_positions = top_axes_positions + bottom_axes_positions
 
 # For a common legend later, save the first axis's legend handles
 ax_first = None
@@ -162,8 +164,9 @@ fig.legend(handles, labels,
           bbox_to_anchor=(0.5, 0.02),
           fontsize=12, 
           ncol=len(METHODS_TO_INCLUDE),
-          bbox_transform=fig.transFigure)
+          bbox_transform=fig.transFigure,
+          frameon=False)  # Removed legend frame
 
 plt.tight_layout(rect=[0, 0.08, 1, 0.95])
-plt.savefig("figures/fig10.png", dpi=300, bbox_inches='tight')
+plt.savefig("figures/fig2.png", dpi=300, bbox_inches='tight')
 plt.show()

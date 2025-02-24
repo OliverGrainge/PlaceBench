@@ -65,22 +65,28 @@ datasets = [
 ]
 
 # Create a figure
-fig = plt.figure(figsize=(15, 3))  # Wider figure to accommodate all 7 plots in one row
-fig.suptitle("Visual Place Recognition Performance Comparison", y=0.99, fontsize=14)
+fig = plt.figure(figsize=(15.5, 4.2))  # Wider and shorter than before
+fig.suptitle("Visual Place Recognition Performance Comparison", y=1.02, fontsize=14)  # Increased y position
 
-# Use a gridspec with 1 row and 28 columns (4 columns per plot)
-gs = gridspec.GridSpec(1, 28, figure=fig)
+# Use a gridspec with 2 rows and 20 columns.
+gs = gridspec.GridSpec(2, 20, figure=fig, hspace=0.35, top=0.85)  # Added top parameter to leave space for title
 
-# Define gridspec slices for each dataset's subplot in a single row
-axes_positions = [
-    (0, slice(0, 4)),
+# Define gridspec slices for each dataset's subplot.
+# Top row (row 0): 3 subplots, each 4 columns wide, centered (columns 4–8, 8–12, 12–16)
+top_axes_positions = [
     (0, slice(4, 8)),
     (0, slice(8, 12)),
-    (0, slice(12, 16)),
-    (0, slice(16, 20)),
-    (0, slice(20, 24)),
-    (0, slice(24, 28))
+    (0, slice(12, 16))
 ]
+# Bottom row (row 1): 4 subplots, each 4 columns wide, centered (columns 2–6, 6–10, 10–14, 14–18)
+bottom_axes_positions = [
+    (1, slice(2, 6)),
+    (1, slice(6, 10)),
+    (1, slice(10, 14)),
+    (1, slice(14, 18))
+]
+
+axes_positions = top_axes_positions + bottom_axes_positions
 
 # For a common legend later, save the first axis's legend handles
 ax_first = None
@@ -159,5 +165,5 @@ fig.legend(handles, labels,
           bbox_transform=fig.transFigure)
 
 plt.tight_layout(rect=[0, 0.08, 1, 0.95])
-plt.savefig("figures/fig12.png", dpi=300, bbox_inches='tight')
+plt.savefig("figures/fig2.png", dpi=300, bbox_inches='tight')
 plt.show()
