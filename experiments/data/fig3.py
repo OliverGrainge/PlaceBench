@@ -8,19 +8,11 @@ plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update({
     "font.family": "serif",
     "font.size": 11,
-    "axes.labelsize": 13,
-    "axes.titlesize": 13,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
+    "axes.labelsize": 12,
+    "axes.titlesize": 12,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 11,
     "text.usetex": False,
-    "axes.linewidth": 1.2,  # Increased line width
-    "grid.linewidth": 0.8,
-    "lines.linewidth": 2.5,
-    "text.color": "black",  # Ensure all text is black
-    "axes.labelcolor": "black",  # Ensure axis labels are black
-    "axes.edgecolor": "black",  # Ensure axis edges are black
-    "xtick.color": "black",  # Ensure tick labels are black
-    "ytick.color": "black",  # Ensure tick labels are black
 })
 
 # Turn off all grid
@@ -41,11 +33,12 @@ METHODS_TO_INCLUDE = [
 METHOD_NAMES_MAP = {
     "ResNet50-BoQ": "ResNet50-BoQ",
     "DinoV2-BoQ": "DinoV2-BoQ",
-    "DinoV2-Salad": "DinoV2-Salad",
+    "DinoV2-Salad": "DinoV2-SALAD",
     "CosPlaces-D2048": "CosPlaces",
     "EigenPlaces-D2048": "EigenPlaces",
     "TeTRA-BoQ-DD[1]": "TeTRA-BoQ",
-    "TeTRA-SALAD-DD[1]": "TeTRA-Salad",
+    "TeTRA-Salad-DD[1]": "TeTRA-SALAD",
+    "TeTRA-SALAD-DD[1]": "TeTRA-SALAD",
     "TeTRA-MixVPR-DD[1]": "TeTRA-MixVPR",
 }
 
@@ -60,7 +53,6 @@ df["Method"] = pd.Categorical(
     ordered=True
 )
 df = df.sort_values("Method")
-print(df)
 
 
 # Sort by total memory, for instance
@@ -77,10 +69,10 @@ ax3 = ax1.twinx()  # Create a third axis
 ax3.spines['right'].set_position(('outward', 60))
 
 # Plot the existing lines and add the accuracy line
-ax1.plot(x, df_sorted["TotalMemory"], 'o-', color="#ED7D31", label="Total Memory", linewidth=2.5)
+ax1.plot(x, df_sorted["TotalMemory"], 'o-', color="#ED7D31", label="Total Memory")
 ax2.plot(x, df_sorted["Extraction Latency GPU (ms)"] + df_sorted["Matching Latency (ms)"], 
-         's--', color="#2F5597", label="Total Latency", linewidth=2.5)
-ax3.plot(x, df_sorted["Accuracy (R@1)"], '^-', color="#70AD47", label="Accuracy (R@1)", linewidth=2.5)
+         's--', color="#2F5597", label="Total Latency")
+ax3.plot(x, df_sorted["Accuracy (R@1)"], '^-', color="#70AD47", label="Accuracy (R@1)")
 ax3.set_ylim(0, 100)
 
 ax1.set_xticks(x)
@@ -89,13 +81,43 @@ ax1.set_ylabel("Total Memory (MB)")
 ax2.set_ylabel("Total Latency (ms)")
 ax3.set_ylabel("Accuracy (R@1)")
 ax1.set_title(f"Methods sorted by Memory on {DATASET}")
-ax1.grid(True, axis='y', linestyle='--', alpha=0.6, color='gray')
+ax1.grid(True, axis='y', linestyle='--', alpha=0.3)
 
 # Combine legends for all three lines
 lines1, labels1 = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
 lines3, labels3 = ax3.get_legend_handles_labels()
 ax1.legend(lines1 + lines2 + lines3, labels1 + labels2 + labels3, loc="lower right")
+
+# Add annotations for TeTRA-BoQ and EigenPlaces
+for method in ['TeTRA-BoQ', 'EigenPlaces']:
+    # Get the row for this method
+    row = df_sorted[df_sorted['Method'] == method].iloc[0]
+    # Find the position in our x array
+    pos = df_sorted[df_sorted['Method'] == method].index.get_loc(row.name)
+    
+    memory = row['TotalMemory']
+    latency = row['Extraction Latency GPU (ms)'] + row['Matching Latency (ms)']
+
+    
+    # Create annotation text
+    annotation = f'Memory: {memory:.0f}MB\nLatency: {latency:.0f}ms'
+    
+    # For bar charts, position slightly above the highest value
+    
+    if method == "TeTRA-BoQ":
+        pos = 1
+        y_pos = 2000
+    if method == "EigenPlaces":
+        pos = 3
+        y_pos = 3000
+    ax1.annotate(annotation, 
+                 xy=(pos, memory),
+                 xytext=(pos, y_pos),
+                 ha='center',
+                 va='bottom',
+                 bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
+                 arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
 
 plt.tight_layout()
 plt.savefig("figures/fig3.png", dpi=300)
