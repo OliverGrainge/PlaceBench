@@ -5,6 +5,7 @@ METHODS=(
     #'cosplaces32'
     #'cosplaces64'
     #'cosplaces128'
+    'cosplaces256'
     #'cosplaces512'
     #'cosplaces1024'
     #'cosplaces2048'
@@ -29,26 +30,26 @@ METHODS=(
     #'tetra-salad-dd2'
     #'tetra-mixvpr-dd1'
     #'tetra-mixvpr-dd2'
-    'tetra-salad-dd4'
-    'tetra-salad-dd8'
-    'tetra-mixvpr-dd4'
-    'tetra-mixvpr-dd8'
-    'tetra-boq-dd4'
-    'tetra-boq-dd8'
+    #'tetra-salad-dd4'
+    #'tetra-salad-dd8'
+    #'tetra-mixvpr-dd4'
+    #'tetra-mixvpr-dd8'
+    #'tetra-boq-dd4'
+    #'tetra-boq-dd8'
     #'tetra-gem-dd4'
     #'tetra-gem-dd8'
 )
 
 
 DATASETS=(
-    #'msls'
+    'msls'
     #'essex3in1' 
-    #'pitts30k' 
+    'pitts30k' 
     'tokyo247' 
-    #'svox-sun' 
-    #'svox-rain' 
-    #'svox-night' 
-    #'svox-snow'
+    'svox-sun' 
+    'svox-rain' 
+    'svox-night' 
+    'svox-snow'
 )
 
 for method in "${METHODS[@]}"; do
@@ -59,12 +60,12 @@ for method in "${METHODS[@]}"; do
 done
 
 
-for method in "${METHODS[@]}"; do
-    for dataset in "${DATASETS[@]}"; do
-        echo "Running experiment with method: $method, dataset: $dataset"
-        python run_experiment.py --method "$method" --dataset "$dataset" --metrics gpu_time match_time
-    done
-done
+#for method in "${METHODS[@]}"; do
+#    for dataset in "${DATASETS[@]}"; do
+#        echo "Running experiment with method: $method, dataset: $dataset"
+#        python run_experiment.py --method "$method" --dataset "$dataset" --metrics gpu_time match_time
+#    done
+#done
 
 
 for method in "${METHODS[@]}"; do

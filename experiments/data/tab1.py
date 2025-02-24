@@ -3,8 +3,8 @@ import pandas as pd
 df = pd.read_csv("results.csv")
 
 columns = ["MSLS", "Pitts30k", "Tokyo247",  "SVOX-night", "SVOX-rain", "SVOX-snow", "SVOX-sun"]
-methods = ["DinoV2-Salad", "DinoV2-BoQ", "ResNet50-BoQ", "EigenPlaces-D512", "EigenPlaces-D2048", "EigenPlaces-D512",
-          "CosPlaces-D2048", 
+methods = ["DinoV2-Salad", "DinoV2-BoQ", "ResNet50-BoQ", "EigenPlaces-D256", "EigenPlaces-D512", "EigenPlaces-D2048",
+          "CosPlaces-D128", "CosPlaces-D512", "CosPlaces-D2048",
           
           "DinoV2-Salad-INT8", "DinoV2-BoQ-INT8", "ResNet50-BoQ-INT8", "EigenPlaces-D2048-INT8", "CosPlaces-D2048-INT8",
            

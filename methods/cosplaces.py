@@ -102,6 +102,37 @@ class CosPlacesD128(SingleStageMethod):
         super().__init__(name, model, transform, descriptor_dim, search_dist)
 
 
+
+class CosPlacesD256(SingleStageMethod):
+    def __init__(
+        self,
+        name="CosPlaces-D256",
+        model=None,
+        transform=T.Compose(
+            [
+                T.ToTensor(),
+                T.Resize(
+                    (512, 512),
+                    interpolation=T.InterpolationMode.BICUBIC,
+                    antialias=True,
+                ),
+                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        ),
+        descriptor_dim=256,
+        search_dist="cosine",
+    ):
+        with open(os.devnull, "w") as f, redirect_stdout(f), redirect_stderr(f):
+            model = torch.hub.load(
+                "gmberton/cosplace",
+                "get_trained_model",
+                backbone="ResNet50",
+                fc_output_dim=256,
+            )
+
+        super().__init__(name, model, transform, descriptor_dim, search_dist)
+
+
 class CosPlacesD512(SingleStageMethod):
     def __init__(
         self,

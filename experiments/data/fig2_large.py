@@ -65,25 +65,25 @@ datasets = [
 ]
 
 # Create a figure
-fig = plt.figure(figsize=(15.5, 4.2))  # Wider and shorter than before
-fig.suptitle("Visual Place Recognition Performance Comparison", y=1.02, fontsize=14)  # Increased y position
+fig = plt.figure(figsize=(25, 6.78))
+fig.suptitle("Visual Place Recognition Performance Comparison", y=0.75, fontsize=18)  # Reduced y position
 
 # Use a gridspec with 2 rows and 20 columns.
-gs = gridspec.GridSpec(2, 20, figure=fig, hspace=0.35, top=0.85)  # Added top parameter to leave space for title
+gs = gridspec.GridSpec(3, 20, figure=fig, hspace=0.35, top=0.92)  # Reduced top parameter
 
 # Define gridspec slices for each dataset's subplot.
 # Top row (row 0): 3 subplots, each 4 columns wide, centered (columns 4–8, 8–12, 12–16)
 top_axes_positions = [
-    (0, slice(4, 8)),
-    (0, slice(8, 12)),
-    (0, slice(12, 16))
+    (1, slice(4, 8)),
+    (1, slice(8, 12)),
+    (1, slice(12, 16))
 ]
 # Bottom row (row 1): 4 subplots, each 4 columns wide, centered (columns 2–6, 6–10, 10–14, 14–18)
 bottom_axes_positions = [
-    (1, slice(2, 6)),
-    (1, slice(6, 10)),
-    (1, slice(10, 14)),
-    (1, slice(14, 18))
+    (2, slice(2, 6)),
+    (2, slice(6, 10)),
+    (2, slice(10, 14)),
+    (2, slice(14, 18))
 ]
 
 axes_positions = top_axes_positions + bottom_axes_positions
@@ -156,6 +156,9 @@ for i, dataset in enumerate(datasets):
         ax_first = ax
 
 # Create a common legend from the first subplot's handles
+
+plt.subplots_adjust(hspace=-50)
+plt.subplots_adjust(wspace=-0.7)
 handles, labels = ax_first.get_legend_handles_labels()
 fig.legend(handles, labels, 
           loc='center',
@@ -164,6 +167,6 @@ fig.legend(handles, labels,
           ncol=len(METHODS_TO_INCLUDE),
           bbox_transform=fig.transFigure)
 
-plt.tight_layout(rect=[0, 0.08, 1, 0.95])
+#plt.tight_layout(rect=[0, 0.08, 1, 0.95])
 plt.savefig("figures/fig2.png", dpi=300, bbox_inches='tight')
-plt.show()
+

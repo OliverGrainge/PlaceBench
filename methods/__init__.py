@@ -3,6 +3,7 @@ from .cosplaces import (
     CosPlacesD32,
     CosPlacesD64,
     CosPlacesD128,
+    CosPlacesD256,
     CosPlacesD512,
     CosPlacesD1024,
     CosPlacesD2048,
