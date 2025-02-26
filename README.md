@@ -20,12 +20,12 @@ This repository provides tools and metrics to evaluate various Visual Place Reco
   - Model memory footprint
 
 - **Dataset Integration:**
-  - Essex3in1 dataset support
-  - Extensible for additional datasets
+  - Essex3in1, Pitts30k.....  dataset support
+  - Extensible for additional datasets via the VPRDataset base class 
 
 - **Method Implementation:**
   - EigenPlaces implementation
-  - Easy integration of new VPR methods
+  - Easy integration of new VPR methods via the SingleStageVPR base class
 
 ## Installation
 ```bash
@@ -85,16 +85,20 @@ To add a new VPR method, create a new class in the `methods` directory implement
 ## Supported Datasets
 
 - Essex3in1
-- (Add other supported datasets here)
+- pitts30k
+- others on the way! (looking to implement remote storage for the query/reference image lists)
+
+## Supported Methods 
+- EigenPlaces (all sizes)
+- CosPlace (all sizes)
+- Bag of Learnable Queries (conv and dino)
+- MixVPR
+- DinoV2-SALAD 
+
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
 
-[Add your license here]
 
-## Citation
-
-If you use this benchmark in your research, please cite:
