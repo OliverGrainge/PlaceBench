@@ -1,14 +1,15 @@
-from methods import TeTRA
+import torch
+
+import config
 from datasets import Essex3in1
-import config 
-from methods.tetra import Attention 
-import torch 
+from methods import TeTRA
+from methods.tetra import Attention
 
-method = TeTRA() 
+method = TeTRA()
 ds = Essex3in1(root=config.Essex3in1_root)
-img_idx = 0 
+img_idx = 0
 
-image = ds.query_paths[img_idx] 
+image = ds.query_paths[img_idx]
 input_tensor = ds.transform(image)[None, ...]
 
 

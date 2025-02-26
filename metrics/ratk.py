@@ -15,12 +15,13 @@ def ratk(method, dataset, topks=[1, 5]) -> np.ndarray:
         if len(found_at) > 0:
             first_match = found_at[0]
             correct_at_k += first_match < np.array(topks)
-            
+
     import gc
-    if hasattr(method, 'index'):
+
+    if hasattr(method, "index"):
         method.index = None  # Break references
-        del method.index    # Remove attribute
-        gc.collect()   
+        del method.index  # Remove attribute
+        gc.collect()
     return (correct_at_k / len(matches)) * 100
 
 

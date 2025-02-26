@@ -1,3 +1,4 @@
+import gc
 import os
 import pickle
 from abc import ABC, abstractmethod
@@ -10,7 +11,6 @@ import torch.nn as nn
 from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
-import gc 
 
 
 class SingleStageMethod(nn.Module):

@@ -13,7 +13,7 @@ class SVOX(VPRDataset):
         ground_truth_path: str = None,
         condition: str = "sun",
     ):
-        
+
         name = f"{name}-{condition.lower()}"
         ground_truth_path = os.path.join(
             os.path.dirname(__file__), "image_paths", f"svox_{condition}_gt.npy"
