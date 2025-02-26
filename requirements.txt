@@ -1,0 +1,8 @@
+
+einops==0.7.0
+torch>=2.2.0
+torchvision>=0.17.0
+numpy
+timm==0.8.19.dev0
+tqdm==4.66.5
+
