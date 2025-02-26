@@ -38,8 +38,8 @@ METHOD_NAMES_MAP = {
 metrics_original = ["Accuracy (R@1)", "Total Memory (MB)", "Total Latency (ms)"]
 metric_rename_map = {
     "Accuracy (R@1)":    "R@1",
-    "Total Memory (MB)": "NM",
-    "Total Latency (ms)": "NL",
+    "Total Memory (MB)": "Mem",
+    "Total Latency (ms)": "Lat",
 }
 metrics_final = [metric_rename_map[m] for m in metrics_original]
 
@@ -64,12 +64,9 @@ datasets = [
     "SVOX-sun"     # These four will be in the bottom row.
 ]
 
-# Create a figure
-fig = plt.figure(figsize=(25, 6.78))
-fig.suptitle("Visual Place Recognition Performance Comparison", y=0.75, fontsize=18)  # Reduced y position
-
-# Use a gridspec with 2 rows and 20 columns.
-gs = gridspec.GridSpec(3, 20, figure=fig, hspace=0.35, top=0.92)  # Reduced top parameter
+# Create a figure with increased height
+fig = plt.figure(figsize=(25, 8))  # Increased height from 6.78 to 8
+gs = gridspec.GridSpec(3, 20, figure=fig, hspace=-0.05, wspace=-0.025, top=0.92)  # Negative spacing to allow overlap
 
 # Define gridspec slices for each dataset's subplot.
 # Top row (row 0): 3 subplots, each 4 columns wide, centered (columns 4–8, 8–12, 12–16)
@@ -95,6 +92,9 @@ ax_first = None
 for i, dataset in enumerate(datasets):
     r, s = axes_positions[i]
     ax = fig.add_subplot(gs[r, s], projection="polar")
+    
+    # Make the subplot larger
+    ax.set_position(ax.get_position().expanded(1.4, 1.4))  # Scale up both width and height by 40%
     
     # Filter data for the current dataset and only include the desired methods
     df_dataset = df_all[df_all["Dataset"] == dataset].copy()
@@ -135,7 +135,8 @@ for i, dataset in enumerate(datasets):
     
     # Set up the radar chart: with 3 metrics, compute angles
     N = len(metrics_original)
-    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+    # Modify angles to put R@1 at top (90°), Memory at left (210°), and Latency at right (330°)
+    angles = np.array([90, 210, 330]) * np.pi / 180
     
     # Plot radar polygons for each method
     for method in df_norm["Method"].unique():
@@ -149,7 +150,7 @@ for i, dataset in enumerate(datasets):
     
     ax.set_ylim(0, 1)
     ax.set_thetagrids(angles * 180/np.pi, labels=metrics_final, fontsize=8)
-    ax.set_title(dataset, fontsize=10, pad=10)
+    ax.set_title(dataset, fontsize=12, pad=20)
     ax.set_yticklabels([])
     
     if ax_first is None:
@@ -162,11 +163,12 @@ plt.subplots_adjust(wspace=-0.7)
 handles, labels = ax_first.get_legend_handles_labels()
 fig.legend(handles, labels, 
           loc='center',
-          bbox_to_anchor=(0.5, 0.02),
-          fontsize=12, 
+          bbox_to_anchor=(0.5, 0.04),  # Slightly lower to avoid overlap
+          fontsize=14, 
           ncol=len(METHODS_TO_INCLUDE),
           bbox_transform=fig.transFigure)
 
 #plt.tight_layout(rect=[0, 0.08, 1, 0.95])
-plt.savefig("figures/fig2.png", dpi=300, bbox_inches='tight')
+plt.savefig("figures/fig2.jpg", dpi=300, bbox_inches='tight')
+
 

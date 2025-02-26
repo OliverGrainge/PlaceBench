@@ -9,7 +9,7 @@ plt.rcParams.update({
     "font.family": "serif",
     "font.size": 11,
     "axes.labelsize": 12,
-    "axes.titlesize": 12,
+    "axes.titlesize": 18,
     "xtick.labelsize": 11,
     "ytick.labelsize": 11,
     "text.usetex": False,
@@ -42,83 +42,133 @@ METHOD_NAMES_MAP = {
     "TeTRA-MixVPR-DD[1]": "TeTRA-MixVPR",
 }
 
-df = pd.read_csv("results.csv")
-df = df[df["Dataset"] == DATASET].copy()
+# Define datasets to include in accuracy plot
+DATASETS_TO_PLOT = ["Tokyo247"]  # Changed to only include Tokyo247
 
-df = df[df["Method"].isin(METHODS_TO_INCLUDE)]
-df["Method"] = df["Method"].map(METHOD_NAMES_MAP)
-df["Method"] = pd.Categorical(
-    df["Method"], 
-    categories=[METHOD_NAMES_MAP[m] for m in METHODS_TO_INCLUDE], 
-    ordered=True
-)
-df = df.sort_values("Method")
+# Read and prepare data for all datasets
+dfs_by_dataset = {}
+for dataset in DATASETS_TO_PLOT:
+    df_dataset = pd.read_csv("results.csv")
+    df_dataset = df_dataset[df_dataset["Dataset"] == dataset].copy()
+    df_dataset = df_dataset[df_dataset["Method"].isin(METHODS_TO_INCLUDE)]
+    df_dataset["Method"] = df_dataset["Method"].map(METHOD_NAMES_MAP)
+    dfs_by_dataset[dataset] = df_dataset
 
-
-# Sort by total memory, for instance
+# Use Tokyo247 for sorting and other metrics
+df = dfs_by_dataset["Tokyo247"]
 df_sorted = df.assign(TotalMemory = df["Model Memory (MB)"] + df["DB Memory (MB)"])
 df_sorted = df_sorted.sort_values("TotalMemory")
+method_order = df_sorted["Method"].tolist()
 
-x = np.arange(len(df_sorted))
+x = np.arange(len(method_order))
 
-fig, ax1 = plt.subplots(figsize=(8,4))
-ax2 = ax1.twinx()
-ax3 = ax1.twinx()  # Create a third axis
+# Create three subplots stacked vertically
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8), sharex=True)
 
-# Offset the right spine for ax3 to prevent overlap with ax2
-ax3.spines['right'].set_position(('outward', 60))
+# Plot accuracy for each dataset with different markers and colors
+colors = ["#70AD47"]  # Only one color needed
+markers = ['^']  # Only one marker needed
+for dataset, color, marker in zip(DATASETS_TO_PLOT, colors, markers):
+    df_curr = dfs_by_dataset[dataset]
+    # Sort according to Tokyo247's memory-based ordering
+    df_curr_sorted = df_curr.set_index("Method").reindex(method_order).reset_index()
+    ax1.plot(x, df_curr_sorted["Accuracy (R@1)"], marker=marker, linestyle='-', 
+             color=color, label="R@1")
 
-# Plot the existing lines and add the accuracy line
-ax1.plot(x, df_sorted["TotalMemory"], 'o-', color="#ED7D31", label="Total Memory")
+# Continue with original plots for latency and memory
 ax2.plot(x, df_sorted["Extraction Latency GPU (ms)"] + df_sorted["Matching Latency (ms)"], 
          's--', color="#2F5597", label="Total Latency")
-ax3.plot(x, df_sorted["Accuracy (R@1)"], '^-', color="#70AD47", label="Accuracy (R@1)")
-ax3.set_ylim(0, 100)
+ax3.plot(x, df_sorted["TotalMemory"], 'o-', color="#ED7D31", label="Total Memory")
 
-ax1.set_xticks(x)
-ax1.set_xticklabels(df_sorted["Method"], rotation=45, ha="right")
-ax1.set_ylabel("Total Memory (MB)")
+# Only set x-labels on bottom plot
+ax3.set_xticks(x)
+ax3.set_xticklabels(df_sorted["Method"], rotation=45, ha="right")
+
+# Set y-labels for each subplot (reordered)
+ax1.set_ylabel("Accuracy (R@1)")
 ax2.set_ylabel("Total Latency (ms)")
-ax3.set_ylabel("Accuracy (R@1)")
-ax1.set_title(f"Methods sorted by Memory on {DATASET}")
-ax1.grid(True, axis='y', linestyle='--', alpha=0.3)
+ax3.set_ylabel("Total Memory (MB)")
 
-# Combine legends for all three lines
-lines1, labels1 = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-lines3, labels3 = ax3.get_legend_handles_labels()
-ax1.legend(lines1 + lines2 + lines3, labels1 + labels2 + labels3, loc="lower right")
+# Set title only on top subplot
+ax1.set_title(f"VPR System: Resource vs. Accuracy on {DATASET}")
 
-# Add annotations for TeTRA-BoQ and EigenPlaces
-for method in ['TeTRA-BoQ', 'EigenPlaces']:
-    # Get the row for this method
+# Add grid to all subplots
+for ax in [ax1, ax2, ax3]:
+    ax.grid(True, axis='y', linestyle='--', alpha=0.3)
+    ax.legend(loc="center right")
+
+# Add annotations for TeTRA-BoQ and CosPlaces across different subplots
+for method in ['TeTRA-BoQ', 'CosPlaces']:
     row = df_sorted[df_sorted['Method'] == method].iloc[0]
-    # Find the position in our x array
     pos = df_sorted[df_sorted['Method'] == method].index.get_loc(row.name)
     
+    accuracy = row['Accuracy (R@1)']
     memory = row['TotalMemory']
     latency = row['Extraction Latency GPU (ms)'] + row['Matching Latency (ms)']
-
-    
-    # Create annotation text
-    annotation = f'Memory: {memory:.0f}MB\nLatency: {latency:.0f}ms'
-    
-    # For bar charts, position slightly above the highest value
     
     if method == "TeTRA-BoQ":
-        pos = 1
-        y_pos = 2000
-    if method == "EigenPlaces":
+        # Accuracy annotation (ax1)
+        pos = 2
+        print("================== TETRA", pos, accuracy)
+        ax1.annotate(f'Accuracy: {accuracy:.1f}%',
+                    xy=(pos, accuracy),
+                    xytext=(pos, accuracy + 3),
+                    ha='center',
+                    va='bottom',
+                    bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
+        
+        ax2.annotate(f'Latency: {latency:.0f}ms',
+                    xy=(pos, latency),
+                    xytext=(pos, latency + 120),
+                    ha='center',
+                    va='bottom',
+                    bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
+        
+        # Memory annotation (ax3)
+        ax3.annotate(f'Memory: {memory:.0f}MB',
+                    xy=(pos, memory),
+                    xytext=(pos, memory + 2600),
+                    ha='center',
+                    va='bottom',
+                    bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
+
+        
+    
+    if method == "CosPlaces":
         pos = 3
-        y_pos = 3000
-    ax1.annotate(annotation, 
-                 xy=(pos, memory),
-                 xytext=(pos, y_pos),
-                 ha='center',
-                 va='bottom',
-                 bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
-                 arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
+        # Latency annotation (ax2)
+
+        ax1.annotate(f'Accuracy: {accuracy:.1f}%',
+                    xy=(pos, accuracy),
+                    xytext=(pos, accuracy + 6),
+                    ha='center',
+                    va='bottom',
+                    bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
+        
+        ax2.annotate(f'Latency: {latency:.0f}ms',
+                    xy=(pos, latency),
+                    xytext=(pos, latency + 50),
+                    ha='center',
+                    va='bottom',
+                    bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
+        
+        # Memory annotation (ax3)
+        ax3.annotate(f'Memory: {memory:.0f}MB',
+                    xy=(pos, memory),
+                    xytext=(pos, memory + 1000),
+                    ha='center',
+                    va='bottom',
+                    bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=90'))
+
+# Update legend position for accuracy plot
+ax1.legend(loc="center right")
 
 plt.tight_layout()
-plt.savefig("figures/fig3.png", dpi=300)
+plt.savefig("figures/fig3.jpg", dpi=300)
 plt.show()
