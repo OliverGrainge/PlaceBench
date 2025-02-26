@@ -11,3 +11,4 @@
 *.pkl
 *.ckpt
 *.onnx
+*.DS_Store
